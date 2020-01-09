@@ -78,8 +78,9 @@ def parse_record(linebuf):
                 fields['errors'].append(field_info)
         if len(fields['errors']) == 0:
             del(fields['errors'])
-        if fields['mode']['data'].lower() in ['psk','bpsk','psk31','bpsk31','qpsk31']: # We want only PSK31 QSOs
-            record_elements.append(fields)
+#        if fields['mode']['data'].lower() in ['psk','bpsk','psk31','bpsk31','qpsk31']: # We want only PSK31 QSOs
+#            record_elements.append(fields)
+        record_elements.append(fields)
     return record_elements,leftover
 
 
