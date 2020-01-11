@@ -5,16 +5,19 @@
 # module for calculating contest results
 
 # Things to add
-# get state from additional fields
+# TODO : divine State from ARRL section
+# TODO : handle missing MODE exception (W3SW example)
+# TODO : handle missing file/bad filename
 
 import re
 
 # Enumerations
-categories = {5: 'QRP 5 watts',
-              25: 'Low Power 25 watts',
-              50: 'Medium Power 50 watts',
-              100: 'High Power 100 watts',
-              }
+categories = {
+    5: 'QRP 5 watts',
+    25: 'Low Power 25 watts',
+    50: 'Medium Power 50 watts',
+    100: 'High Power 100 watts',
+}
 
 dxcc_entities = {
     '0': {"name": "None (the contacted station is known to not be within a DXCC entity)", "deleted": False},
@@ -631,9 +634,14 @@ def get_dxcc(record):
     if 've_prov' in record:
         return {'length': 1, 'data': '1'}
     if 'state' in record:
-        if record['state']['data'] in dxcc_1_states.keys():
+        if record['state']['data'].upper() in dxcc_1_states.keys():
             return {'length': 1, 'data': '1'}
-        elif record['state']['data'] in dxcc_291_states.keys():
+        elif record['state']['data'].upper() in dxcc_291_states.keys():
+            return {'length': 3, 'data': '291'}
+    if 'app_n1mm_exchange1' in record:
+        if record['app_n1mm_exchange1']['data'].upper() in dxcc_1_states.keys():
+            return {'length': 1, 'data': '1'}
+        elif record['app_n1mm_exchange1']['data'].upper() in dxcc_291_states.keys():
             return {'length': 3, 'data': '291'}
     if 'srx_string' in record:
         srx_data = re.split('[\W\s]{1}', record['srx_string']['data'])

@@ -3,6 +3,8 @@
 # pskfest.py
 #
 # module for calculating pskfest results
+#
+# TODO: handle missing file/bad filename
 
 def print_entries(entries,valid=True):
     if valid:
