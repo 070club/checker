@@ -4,9 +4,12 @@
 #
 # module for calculating pskfest results
 #
-# TODO: handle missing file/bad filename
+# TODO: properly handle multiple files at the same time
+# TODO: add ability to match logs (check logs)
+import sys
 
-def print_entries(entries,valid=True):
+
+def print_entries(entries, valid=True):
     if valid:
         print('\nValid QSOs')
         print_header(valid=True)
@@ -48,7 +51,7 @@ def print_entries(entries,valid=True):
                     srx_string,
                     dxcc,
                     state,
-                    )
+                )
                 )
             except KeyError:
                 print("KeyError for record", file=sys.stderr)
@@ -95,14 +98,14 @@ def print_entries(entries,valid=True):
                     dxcc,
                     state,
                     '|'.join(rec['errors']),
-                    )
+                )
                 )
             except KeyError:
                 print("KeyError for record", file=sys.stderr)
 
 
-def print_score(scores,summary):
-    if summary: #Report only, spit out CSV of call+score
+def print_score(scores, summary):
+    if summary:  # Report only, spit out CSV of call+score
         callsign = summary['callsign']
         try:
             category = contests.categories[int(summary['category'])]
@@ -128,7 +131,7 @@ def print_score(scores,summary):
             dxcc,
             state,
             total,
-            )
+        )
         )
     else:
         print('\nQs:{} DXCC:{} STATE:{} Total:{}'.format(
@@ -136,7 +139,7 @@ def print_score(scores,summary):
             len(scores['mults']['dxcc']['data']),
             len(scores['mults']['state']),
             scores['total']
-            )
+        )
         )
         if scores['mults']['dxcc']['errors']:
             for error in scores['mults']['dxcc']['errors']:
@@ -144,7 +147,7 @@ def print_score(scores,summary):
                     error['call']['data'],
                     error['qso_date']['data'],
                     error['time_on']['data'],
-                    )
+                )
                 )
 
 
@@ -169,7 +172,7 @@ def print_title_block(summary):
         summary['callsign'],
         category,
         summary['email'],
-        )
+    )
     )
 
 
@@ -195,13 +198,14 @@ if __name__ == '__main__':
     summary = contests.summary_parser(args.summary)
     adif_files = {}
     for adif in args.adif:
+        # TODO: handle missing file/bad filename (foo.bar.adi)
         name, ext = adif.split('.')
         adif_files[name] = adifparser.parse(adif)
 
     if args.year == '2019':
-        valid_entries, invalid_entries, scores = contests.pskfest_2019(adif_files,summary)
+        valid_entries, invalid_entries, scores = contests.pskfest_2019(adif_files, summary)
     if args.year == '2020':
-        valid_entries, invalid_entries, scores = contests.pskfest_2020(adif_files,summary)
+        valid_entries, invalid_entries, scores = contests.pskfest_2020(adif_files, summary)
 
     if args.debug:
         pprint.pprint(valid_entries)
@@ -209,13 +213,12 @@ if __name__ == '__main__':
         pprint.pprint(invalid_entries)
 
     if args.score_only:
-        print_score(scores,summary[args.call.upper()])
+        print_score(scores, summary[args.call.upper()])
     else:
         print_title_block(summary[args.call.upper()])
-        print_score(scores,None)
+        print_score(scores, None)
         if valid_entries:
-            print_entries(valid_entries,valid=True)
+            print_entries(valid_entries, valid=True)
         if not args.valid_only:
             if invalid_entries:
-                print_entries(invalid_entries,valid=False)
-
+                print_entries(invalid_entries, valid=False)
