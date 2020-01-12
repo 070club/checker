@@ -7,7 +7,6 @@
 # Things to add
 # TODO : divine State from ARRL section
 # TODO : handle missing MODE exception (W3SW example)
-# TODO : handle missing file/bad filename
 
 import re
 
@@ -648,10 +647,13 @@ def get_dxcc(record):
         for element in srx_data:
             for entity in dxcc_entities:
                 if element.upper() == dxcc_entities[entity]['name']:
-                    return {'length': len(element), 'data': entity.upper()}
+                    return {'length': len(entity), 'data': entity.upper()}
     if 'country' in record:
-        # This needs to be enumerated for accuracy (just winging it with the name for now
-        return record['country']
+        if record['country']['data'].upper() in ['US', 'USA', 'UNITED STATES']:
+            return {'length': 3, 'data': '291'}
+        for entity in dxcc_entities:
+            if record['country']['data'].upper() == dxcc_entities[entity]['name']:
+                return {'length': len(entity), 'data': entity.upper()}
     return None
 
 
@@ -696,8 +698,9 @@ def calc_scores(valid_records):
         except:
             scores['mults']['dxcc']['errors'].append(rec)
         try:
-            #if rec['state']['data'].upper() not in scores['mults']['state'] and rec['dxcc']['data'] in ['1', '291']:
-            if rec['state']['data'].upper() not in scores['mults']['state']:
+            # For now, assuming only US and Canada for states
+            if rec['state']['data'].upper() not in scores['mults']['state'] and \
+                    int(rec['dxcc']['data']) in [1, 6, 110, 291]:
                 scores['mults']['state'].append(rec['state']['data'].upper())
         except:
             pass
