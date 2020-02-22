@@ -425,73 +425,162 @@ dxcc_entities = {
 }
 
 dxcc_1_states = {
-    'NS': {'name': 'Nova Scotia', 'cqzones': ['05'], 'ituzones': ['09']},
-    'QC': {'name': 'Québec', 'cqzones': ['02', '05'], 'ituzones': ['04', '09']},
-    'ON': {'name': 'Ontario', 'cqzones': ['04'], 'ituzones': ['03', '04']},
-    'MB': {'name': 'Manitoba', 'cqzones': ['04'], 'ituzones': ['03', '04']},
-    'SK': {'name': 'Saskatchewan', 'cqzones': ['04'], 'ituzones': ['03']},
     'AB': {'name': 'Alberta', 'cqzones': ['04'], 'ituzones': ['02']},
     'BC': {'name': 'British Columbia', 'cqzones': ['03'], 'ituzones': ['02']},
-    'NT': {'name': 'Northwest Territories', 'cqzones': ['01', '02', '04'], 'ituzones': ['03', '04', '75']},
+    'MB': {'name': 'Manitoba', 'cqzones': ['04'], 'ituzones': ['03', '04']},
     'NB': {'name': 'New Brunswick', 'cqzones': ['05'], 'ituzones': ['09']},
     'NL': {'name': 'Newfoundland and Labrador', 'cqzones': ['02', '05'], 'ituzones': ['09']},
-    'YT': {'name': 'Yukon', 'cqzones': ['01'], 'ituzones': ['02']},
-    'PE': {'name': 'Prince Edward Island', 'cqzones': ['05'], 'ituzones': ['09']},
+    'NS': {'name': 'Nova Scotia', 'cqzones': ['05'], 'ituzones': ['09']},
+    'NT': {'name': 'Northwest Territories', 'cqzones': ['01', '02', '04'], 'ituzones': ['03', '04', '75']},
     'NU': {'name': 'Nunavut', 'cqzones': ['02'], 'ituzones': ['04', '09']},
+    'ON': {'name': 'Ontario', 'cqzones': ['04'], 'ituzones': ['03', '04']},
+    'PE': {'name': 'Prince Edward Island', 'cqzones': ['05'], 'ituzones': ['09']},
+    'QC': {'name': 'Québec', 'cqzones': ['02', '05'], 'ituzones': ['04', '09']},
+    'SK': {'name': 'Saskatchewan', 'cqzones': ['04'], 'ituzones': ['03']},
+    'YT': {'name': 'Yukon', 'cqzones': ['01'], 'ituzones': ['02']},
 }
 
 dxcc_291_states = {
-    'CT': {'name': 'Connecticut', 'cqzones': ['05'], 'ituzones': ['08']},
-    'ME': {'name': 'Maine', 'cqzones': ['05'], 'ituzones': ['08']},
-    'MA': {'name': 'Massachusetts', 'cqzones': ['05'], 'ituzones': ['08']},
-    'NH': {'name': 'New Hampshire', 'cqzones': ['05'], 'ituzones': ['08']},
-    'RI': {'name': 'Rhode Island', 'cqzones': ['05'], 'ituzones': ['08']},
-    'VT': {'name': 'Vermont', 'cqzones': ['05'], 'ituzones': ['08']},
-    'NJ': {'name': 'New Jersey', 'cqzones': ['05'], 'ituzones': ['08']},
-    'NY': {'name': 'New York', 'cqzones': ['05'], 'ituzones': ['08']},
-    'DE': {'name': 'Delaware', 'cqzones': ['05'], 'ituzones': ['08']},
-    'DC': {'name': 'District of Columbia', 'cqzones': ['05'], 'ituzones': ['08']},
-    'MD': {'name': 'Maryland', 'cqzones': ['05'], 'ituzones': ['08']},
-    'PA': {'name': 'Pennsylvania', 'cqzones': ['05'], 'ituzones': ['08']},
     'AL': {'name': 'Alabama', 'cqzones': ['04'], 'ituzones': ['08']},
+    'AR': {'name': 'Arkansas', 'cqzones': ['04'], 'ituzones': ['07', '08']},
+    'AZ': {'name': 'Arizona', 'cqzones': ['03'], 'ituzones': ['06', '07']},
+    'CA': {'name': 'California', 'cqzones': ['03'], 'ituzones': ['06']},
+    'CO': {'name': 'Colorado', 'cqzones': ['04'], 'ituzones': ['07']},
+    'CT': {'name': 'Connecticut', 'cqzones': ['05'], 'ituzones': ['08']},
+    'DC': {'name': 'District of Columbia', 'cqzones': ['05'], 'ituzones': ['08']},
+    'DE': {'name': 'Delaware', 'cqzones': ['05'], 'ituzones': ['08']},
     'FL': {'name': 'Florida', 'cqzones': ['05'], 'ituzones': ['08']},
     'GA': {'name': 'Georgia', 'cqzones': ['05'], 'ituzones': ['08']},
-    'KY': {'name': 'Kentucky', 'cqzones': ['04'], 'ituzones': ['08']},
-    'NC': {'name': 'North Carolina', 'cqzones': ['04'], 'ituzones': ['08']},
-    'SC': {'name': 'South Carolina', 'cqzones': ['05'], 'ituzones': ['08']},
-    'TN': {'name': 'Tennessee', 'cqzones': ['04'], 'ituzones': ['07', '08']},
-    'VA': {'name': 'Virginia', 'cqzones': ['05'], 'ituzones': ['08']},
-    'AR': {'name': 'Arkansas', 'cqzones': ['04'], 'ituzones': ['07', '08']},
-    'LA': {'name': 'Louisiana', 'cqzones': ['04'], 'ituzones': ['07', '08']},
-    'MS': {'name': 'Mississippi', 'cqzones': ['04'], 'ituzones': ['07', '08']},
-    'NM': {'name': 'New Mexico', 'cqzones': ['04'], 'ituzones': ['07']},
-    'OK': {'name': 'Oklahoma', 'cqzones': ['04'], 'ituzones': ['07']},
-    'TX': {'name': 'Texas', 'cqzones': ['04'], 'ituzones': ['07']},
-    'CA': {'name': 'California', 'cqzones': ['03'], 'ituzones': ['06']},
-    'AZ': {'name': 'Arizona', 'cqzones': ['03'], 'ituzones': ['06', '07']},
+    'IA': {'name': 'Iowa', 'cqzones': ['04'], 'ituzones': ['07']},
     'ID': {'name': 'Idaho', 'cqzones': ['03'], 'ituzones': ['06']},
-    'MT': {'name': 'Montana', 'cqzones': ['04'], 'ituzones': ['06', '07']},
-    'NV': {'name': 'Nevada', 'cqzones': ['03'], 'ituzones': ['06']},
-    'OR': {'name': 'Oregon', 'cqzones': ['03'], 'ituzones': ['06']},
-    'UT': {'name': 'Utah', 'cqzones': ['03'], 'ituzones': ['06', '07']},
-    'WA': {'name': 'Washington', 'cqzones': ['03'], 'ituzones': ['06']},
-    'WY': {'name': 'Wyoming', 'cqzones': ['04'], 'ituzones': ['07']},
-    'MI': {'name': 'Michigan', 'cqzones': ['04'], 'ituzones': ['07', '08']},
-    'OH': {'name': 'Ohio', 'cqzones': ['04'], 'ituzones': ['08']},
-    'WV': {'name': 'West Virginia', 'cqzones': ['05'], 'ituzones': ['08']},
     'IL': {'name': 'Illinois', 'cqzones': ['04'], 'ituzones': ['07', '08']},
     'IN': {'name': 'Indiana', 'cqzones': ['04'], 'ituzones': ['08']},
-    'WI': {'name': 'Wisconsin', 'cqzones': ['04'], 'ituzones': ['07', '08']},
-    'CO': {'name': 'Colorado', 'cqzones': ['04'], 'ituzones': ['07']},
-    'IA': {'name': 'Iowa', 'cqzones': ['04'], 'ituzones': ['07']},
     'KS': {'name': 'Kansas', 'cqzones': ['04'], 'ituzones': ['07']},
+    'KY': {'name': 'Kentucky', 'cqzones': ['04'], 'ituzones': ['08']},
+    'LA': {'name': 'Louisiana', 'cqzones': ['04'], 'ituzones': ['07', '08']},
+    'MA': {'name': 'Massachusetts', 'cqzones': ['05'], 'ituzones': ['08']},
+    'MD': {'name': 'Maryland', 'cqzones': ['05'], 'ituzones': ['08']},
+    'ME': {'name': 'Maine', 'cqzones': ['05'], 'ituzones': ['08']},
+    'MI': {'name': 'Michigan', 'cqzones': ['04'], 'ituzones': ['07', '08']},
     'MN': {'name': 'Minnesota', 'cqzones': ['04'], 'ituzones': ['07']},
     'MO': {'name': 'Missouri', 'cqzones': ['04'], 'ituzones': ['07', '08']},
-    'NE': {'name': 'Nebraska', 'cqzones': ['04'], 'ituzones': ['07']},
+    'MS': {'name': 'Mississippi', 'cqzones': ['04'], 'ituzones': ['07', '08']},
+    'MT': {'name': 'Montana', 'cqzones': ['04'], 'ituzones': ['06', '07']},
+    'NC': {'name': 'North Carolina', 'cqzones': ['04'], 'ituzones': ['08']},
     'ND': {'name': 'North Dakota', 'cqzones': ['04'], 'ituzones': ['07']},
+    'NE': {'name': 'Nebraska', 'cqzones': ['04'], 'ituzones': ['07']},
+    'NH': {'name': 'New Hampshire', 'cqzones': ['05'], 'ituzones': ['08']},
+    'NJ': {'name': 'New Jersey', 'cqzones': ['05'], 'ituzones': ['08']},
+    'NM': {'name': 'New Mexico', 'cqzones': ['04'], 'ituzones': ['07']},
+    'NV': {'name': 'Nevada', 'cqzones': ['03'], 'ituzones': ['06']},
+    'NY': {'name': 'New York', 'cqzones': ['05'], 'ituzones': ['08']},
+    'OH': {'name': 'Ohio', 'cqzones': ['04'], 'ituzones': ['08']},
+    'OK': {'name': 'Oklahoma', 'cqzones': ['04'], 'ituzones': ['07']},
+    'OR': {'name': 'Oregon', 'cqzones': ['03'], 'ituzones': ['06']},
+    'PA': {'name': 'Pennsylvania', 'cqzones': ['05'], 'ituzones': ['08']},
+    'RI': {'name': 'Rhode Island', 'cqzones': ['05'], 'ituzones': ['08']},
+    'SC': {'name': 'South Carolina', 'cqzones': ['05'], 'ituzones': ['08']},
     'SD': {'name': 'South Dakota', 'cqzones': ['04'], 'ituzones': ['07']},
+    'TN': {'name': 'Tennessee', 'cqzones': ['04'], 'ituzones': ['07', '08']},
+    'TX': {'name': 'Texas', 'cqzones': ['04'], 'ituzones': ['07']},
+    'UT': {'name': 'Utah', 'cqzones': ['03'], 'ituzones': ['06', '07']},
+    'VA': {'name': 'Virginia', 'cqzones': ['05'], 'ituzones': ['08']},
+    'VT': {'name': 'Vermont', 'cqzones': ['05'], 'ituzones': ['08']},
+    'WA': {'name': 'Washington', 'cqzones': ['03'], 'ituzones': ['06']},
+    'WI': {'name': 'Wisconsin', 'cqzones': ['04'], 'ituzones': ['07', '08']},
+    'WV': {'name': 'West Virginia', 'cqzones': ['05'], 'ituzones': ['08']},
+    'WY': {'name': 'Wyoming', 'cqzones': ['04'], 'ituzones': ['07']},
 }
 
+#ARRL sections
+#arrl_section_to_state = {
+#  'AL': { 'name': 'Alabama',	291
+#  'AK': { 'name': 'Alaska',	6
+#  'AB': { 'name': 'Alberta',	1
+#  'AR': { 'name': 'Arkansas',	291
+#  'AZ': { 'name': 'Arizona',	291
+#  'BC': { 'name': 'British Columbia',	1
+#  'CO': { 'name': 'Colorado',	291
+#  'CT': { 'name': 'Connecticut',	291
+#  'DE': { 'name': 'Delaware',	291
+#  'EB': { 'name': 'East Bay',	291
+#  'EMA': { 'name': 'Eastern Massachusetts',	291
+#  'ENY': { 'name': 'Eastern New York',	291
+#  'EPA': { 'name': 'Eastern Pennsylvania',	291
+#  'EWA': { 'name': 'Eastern Washington',	291
+#  'GA': { 'name': 'Georgia',	291
+#  'GTA': { 'name': 'Greater Toronto Area',	1	2012/09/01
+#  'ID': { 'name': 'Idaho',	291
+#  'IL': { 'name': 'Illinois',	291
+#  'IN': { 'name': 'Indiana',	291
+#  'IA': { 'name': 'Iowa',	291
+#  'KS': { 'name': 'Kansas',	291
+#  'KY': { 'name': 'Kentucky',	291
+#  'LAX': { 'name': 'Los Angeles',	291
+#  'LA': { 'name': 'Louisiana',	291
+#  'ME': { 'name': 'Maine',	1
+#  'MB': { 'name': 'Manitoba',	1
+#  'MAR': { 'name': 'Maritime',	1
+#  'MDC': { 'name': 'Maryland-DC',	291
+#  'MI': { 'name': 'Michigan',	291
+#  'MN': { 'name': 'Minnesota',	291
+#  'MS': { 'name': 'Mississippi',	291
+#  'MO': { 'name': 'Missouri',	291
+#  'MT': { 'name': 'Montana',	291
+#  'NE': { 'name': 'Nebraska',	291
+#  'NV': { 'name': 'Nevada',	291
+#  'NH': { 'name': 'New Hampshire',	291
+#  'NM': { 'name': 'New Mexico',	291
+#  'NLI': { 'name': 'New York City-Long Island',	291
+#  'NL': { 'name': 'Newfoundland/Labrador',	1
+#  'NC': { 'name': 'North Carolina',	291
+#  'ND': { 'name': 'North Dakota',	291
+#  'NTX': { 'name': 'North Texas',	291
+#  'NFL': { 'name': 'Northern Florida',	291
+#  'NNJ': { 'name': 'Northern New Jersey',	291
+#  'NNY': { 'name': 'Northern New York',	291
+#  'NT': { 'name': 'Northwest Territories/Yukon/Nunavut',	1	2003/11/01
+#  'NWT': { 'name': 'Northwest Territories/Yukon/Nunavut (replaced by NT)',	1	 	2003/11/01
+#  'OH': { 'name': 'Ohio',	291
+#  'OK': { 'name': 'Oklahoma',	291
+#  'ON': { 'name': 'Ontario(replaced by GTA, ONE, ONN, and ONS)',	1	 	2012/09/01
+#  'ONE': { 'name': 'Ontario East',	1	2012/09/01
+#  'ONN': { 'name': 'Ontario North',	1	2012/09/01
+#  'ONS': { 'name': 'Ontario South',	1	2012/09/01
+#  'ORG': { 'name': 'Orange',	291
+#  'OR': { 'name': 'Oregon',	291
+#  'PAC': { 'name': 'Pacific',	9, 20, 103, 110, 123, 134, 138, 166, 174, 197, 297, 515
+#  'PR': { 'name': 'Puerto Rico',	43, 202
+#  'QC': { 'name': 'Quebec',	1
+#  'RI': { 'name': 'Rhode Island',	291
+#  'SV': { 'name': 'Sacramento Valley',	291
+#  'SDG': { 'name': 'San Diego',	291
+#  'SF': { 'name': 'San Francisco',	291
+#  'SJV': { 'name': 'San Joaquin Valley',	291
+#  'SB': { 'name': 'Santa Barbara',	291
+#  'SCV': { 'name': 'Santa Clara Valley',	291
+#  'SK': { 'name': 'Saskatchewan',	1
+#  'SC': { 'name': 'South Carolina',	291
+#  'SD': { 'name': 'South Dakota',	291
+#  'STX': { 'name': 'South Texas',	291
+#  'SFL': { 'name': 'Southern Florida',	291
+#  'SNJ': { 'name': 'Southern New Jersey',	291
+#  'TN': { 'name': 'Tennessee',	291
+#  'VI': { 'name': 'US Virgin Islands',	105, 182, 285
+#  'UT': { 'name': 'Utah',	291
+#  'VT': { 'name': 'Vermont',	291
+#  'VA': { 'name': 'Virginia',	291
+#  'WCF': { 'name': 'West Central Florida',	291
+#  'WTX': { 'name': 'West Texas',	291
+#  'WV': { 'name': 'West Virginia',	291
+#  'WMA': { 'name': 'Western Massachusetts',	291
+#  'WNY': { 'name': 'Western New York',	291
+#  'WPA': { 'name': 'Western Pennsylvania',	291
+#  'WWA': { 'name': 'Western Washington',	291
+#  'WI': { 'name': 'Wisconsin',	291
+#  'WY': { 'name': 'Wyoming',	291
+
+#}
 
 # End of enumerations
 
@@ -623,7 +712,12 @@ def get_state(record):
             if qth_data in dxcc_1_states.keys():
                 return {'length': len(qth_data), 'data': qth_data}
         elif len(qth_data) > 2:
-            pass # Might be full State name
+            elements = re.split('[,\s]{1}', qth_data)
+            for element in elements:
+                if element in dxcc_291_states.keys():
+                    return {'length': len(element), 'data': element}
+                if element in dxcc_1_states.keys():
+                    return {'length': len(element), 'data': element}
     if 'section' in record:  # Scraping the bottom of the barrel (section is not the same as State)
         return record['section']
     return None
