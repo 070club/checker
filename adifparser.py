@@ -4,6 +4,8 @@
 #
 # Create dict of record info from adif input
 
+# TODO: return header information along with records
+
 import re
 import sys
 import fileinput
