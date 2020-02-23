@@ -9,6 +9,7 @@
 # TODO : handle missing MODE exception (W3SW example)
 
 import re
+import sys
 
 # Enumerations
 categories = {
@@ -492,8 +493,9 @@ dxcc_291_states = {
     'WY': {'name': 'Wyoming', 'cqzones': ['04'], 'ituzones': ['07']},
 }
 
-#ARRL sections
-#arrl_section_to_state = {
+
+# ARRL sections
+# arrl_section_to_state = {
 #  'AL': { 'name': 'Alabama',	291
 #  'AK': { 'name': 'Alaska',	6
 #  'AB': { 'name': 'Alberta',	1
@@ -580,7 +582,7 @@ dxcc_291_states = {
 #  'WI': { 'name': 'Wisconsin',	291
 #  'WY': { 'name': 'Wyoming',	291
 
-#}
+# }
 
 # End of enumerations
 
@@ -652,6 +654,31 @@ def pskfest_2020(adif_files, summary):
     return valid_records, invalid_records, scores
 
 
+def vdsprint_2019(adif_files, summary):
+    return None
+
+
+def vdsprint_2020(adif_files, summary):
+    conditions = {'valid_dates': [20200214],
+                  'valid_modes': ['psk', 'bpsk', 'psk31', 'bpsk31', 'qpsk31'],
+                  'valid_bands': ['40m', '80m', '160m'],
+                  }
+    valid_records = []
+    invalid_records = []
+    # loop through adif files
+    # for each adif file, grab summary info
+    for entry in adif_files:
+        for record in adif_files[entry]:
+            s_record = synthesize_fields(record)
+            status, errors = test_record(s_record, conditions, summary, valid_records)
+            if errors:
+                invalid_records.append({'data': s_record, 'errors': errors})
+            else:
+                valid_records.append(s_record)
+    scores = calc_scores(valid_records)
+    return valid_records, invalid_records, scores
+
+
 def synthesize_fields(record):
     """Method to build synthetic fields for the values we care about if they are
         empty or broken or something else (e.g., build band from freq)"""
@@ -683,6 +710,52 @@ def synthesize_fields(record):
     return s_record
 
 
+def get_om_yl(record):
+    """ look for OM or YL in various places for the Valentine's Sprint"""
+
+    if 'app_n1mm_misctext' in record:
+        n1mm_data = re.split('[\W\s]{1}', record['app_n1mm_misctext']['data'])
+        for element in n1mm_data:
+            if element.upper() in ['OM', 'YL']:
+                return {'length': len(element), 'data': element.upper()}
+    if 'srx_string' in record:
+        srx_data = re.split('[\W\s]{1}', record['srx_string']['data'])
+        for element in srx_data:
+            if element.upper() in ['OM', 'YL']:
+                return {'length': len(element), 'data': element.upper()}
+    if 'srx' in record:
+        srx_data = re.split('[\W\s]{1}', record['srx']['data'])
+        for element in srx_data:
+            if element.upper() in ['OM', 'YL']:
+                return {'length': len(element), 'data': element.upper()}
+    if 'comment' in record:
+        comment_data = re.split('[\W\s]{1}', record['comment']['data'])
+        for element in comment_data:
+            if element.upper() in ['OM', 'YL']:
+                return {'length': len(element), 'data': element.upper()}
+    if 'notes' in record:
+        notes_data = re.split('[\W\s]{1}', record['notes']['data'])
+        for element in notes_data:
+            if element.upper() in ['OM', 'YL']:
+                return {'length': len(element), 'data': element.upper()}
+    if 'name' in record:
+        name_data = re.split('[\W\s]{1}', record['name']['data'])
+        for element in name_data:
+            if element.upper() in ['OM', 'YL']:
+                return {'length': len(element), 'data': element.upper()}
+    if 'other' in record:
+        other_data = re.split('[\W\s]{1}', record['other']['data'])
+        for element in other_data:
+            if element.upper() in ['OM', 'YL']:
+                return {'length': len(element), 'data': element.upper()}
+    if 'award' in record:
+        award_data = re.split('[\W\s]{1}', record['award']['data'])
+        for element in award_data:
+            if element.upper() in ['OM', 'YL']:
+                return {'length': len(element), 'data': element.upper()}
+    return None
+
+
 def get_state(record):
     """ Walk a list of increasingly poor options to try and find a value for State"""
 
@@ -700,6 +773,13 @@ def get_state(record):
     if 'rst_rcvd' in record:
         rst_data = re.split('[\W\s]{1}', record['rst_rcvd']['data'])
         for element in rst_data:
+            if element.upper() in dxcc_291_states.keys():
+                return {'length': len(element), 'data': element.upper()}
+            if element.upper() in dxcc_1_states.keys():
+                return {'length': len(element), 'data': element.upper()}
+    if 'srx' in record:
+        srx_data = re.split('[\W\s]{1}', record['srx']['data'])
+        for element in srx_data:
             if element.upper() in dxcc_291_states.keys():
                 return {'length': len(element), 'data': element.upper()}
             if element.upper() in dxcc_1_states.keys():
@@ -781,11 +861,20 @@ def calc_scores(valid_records):
     scores = {}
     scores['q-points'] = len(valid_records)
     scores['mults'] = {}
+    scores['mults']['yl'] = 0
     scores['mults']['dxcc'] = {}
     scores['mults']['dxcc']['data'] = []
     scores['mults']['dxcc']['errors'] = []
     scores['mults']['state'] = []
     for rec in valid_records:
+        om_yl = get_om_yl(rec)
+        try:
+            if om_yl['data'] == 'YL':  # VD Sprint Mult
+                scores['mults']['yl'] += 1
+        except TypeError:
+            pass
+        except KeyError:
+            pass
         try:
             if rec['dxcc']['data'] not in scores['mults']['dxcc']['data']:
                 scores['mults']['dxcc']['data'].append(rec['dxcc']['data'])
@@ -798,15 +887,16 @@ def calc_scores(valid_records):
                 scores['mults']['state'].append(rec['state']['data'].upper())
         except:
             pass
-    scores['total'] = (len(scores['mults']['dxcc']['data']) + len(scores['mults']['state'])) * scores['q-points']
+    scores['total'] = (len(scores['mults']['dxcc']['data']) + len(scores['mults']['state'])) * (
+                scores['q-points'] + scores['mults']['yl'])
     return scores
 
 
-def summary_parser(inputfile):
+def summary_parser(inputfile, delim):
     import csv
     summary = {}
-    with open(inputfile, newline='') as csvfile:
-        reader = csv.DictReader(csvfile)
+    with open(inputfile, newline='', encoding='utf-16') as csvfile:
+        reader = csv.DictReader(csvfile, delimiter=delim)
         for row in reader:
             summary[row['callsign']] = row
     return summary
@@ -867,10 +957,23 @@ def rec_in_bands(entry, valid_bands, summary):
 def rec_in_window(entry, valid_dates, summary):
     # take the adif record and compare against valid
     # dates and times
+    # TODO Need to generalize for multi-windows (eg, TDW)
+    # TODO Need to standardize on form field names
+
+    block_start = int(summary['Block start time'])
+    block_end = block_start + 600
+    if block_end > 2359:
+        block_end = 2359
+    if entry['time_on']['length'] == 6:
+        block_start *= 100
+        block_end *= 100
 
     # print("qso_date: {} valid_dates: {}".format(entry['qso_date']['data'],valid_dates))
     if int(entry['qso_date']['data']) in valid_dates:
-        return True
+        if block_start <= int(entry['time_on']['data']) <= block_end:
+            return True
+        else:
+            return False
     else:
         return False
 
@@ -883,6 +986,239 @@ def rec_is_psk(entry, valid_modes, summary):
         return True
     else:
         return False
+
+
+def print_entries(entries, valid=True):
+    if valid:
+        print('\nValid QSOs')
+        print_header(valid=True)
+        for rec in entries:
+            try:
+                call = rec['call']['data'].upper()
+            except:
+                call = ''
+            try:
+                qso_date = rec['qso_date']['data']
+            except:
+                qso_date = ''
+            try:
+                time_on = rec['time_on']['data']
+            except:
+                time_on = ''
+            try:
+                band = rec['band']['data']
+            except:
+                band = ''
+            try:
+                srx_string = rec['srx_string']['data']
+            except:
+                try:
+                    srx_string = rec['srx']['data']
+                except:
+                    try:
+                        srx_string = rec['comment']['data']
+                    except:
+                        try:
+                            srx_string = rec['notes']['data']
+                        except:
+                            try:
+                                srx_string = rec['app_n1mm_misctext']['data']
+                            except:
+                                try:
+                                    srx_string = rec['name']['data']
+                                except:
+                                    try:
+                                        srx_string = rec['other']['data']
+                                    except:
+                                        try:
+                                            srx_string = rec['award']['data']
+                                        except:
+                                            srx_string = ''
+            try:
+                dxcc = rec['dxcc']['data']
+            except:
+                dxcc = ''
+            try:
+                state = rec['state']['data'].upper()
+            except:
+                state = ''
+            try:
+                print("{},{},{},{},{},{},{}".format(
+                    call,
+                    qso_date,
+                    time_on,
+                    band,
+                    srx_string,
+                    dxcc,
+                    state,
+                )
+                )
+            except KeyError:
+                print("KeyError for record", file=sys.stderr)
+    else:
+        print('\nBroken QSOs (check listed errors)')
+        print_header(valid=False)
+        for rec in entries:
+            try:
+                call = rec['data']['call']['data']
+            except:
+                call = ''
+            try:
+                qso_date = rec['data']['qso_date']['data']
+            except:
+                qso_date = ''
+            try:
+                time_on = rec['data']['time_on']['data']
+            except:
+                time_on = ''
+            try:
+                band = rec['data']['band']['data']
+            except:
+                band = ''
+            try:
+                srx_string = rec['data']['srx_string']['data']
+            except:
+                srx_string = ''
+            try:
+                dxcc = rec['data']['dxcc']['data']
+            except:
+                dxcc = ''
+            try:
+                state = rec['data']['state']['data']
+            except:
+                state = ''
+
+            try:
+                print("{},{},{},{},{},{},{},{}".format(
+                    call,
+                    qso_date,
+                    time_on,
+                    band,
+                    srx_string,
+                    dxcc,
+                    state,
+                    '|'.join(rec['errors']),
+                )
+                )
+            except KeyError:
+                print("KeyError for record", file=sys.stderr)
+
+
+def print_score(scores, summary):
+    if summary:  # Report only, spit out CSV of call+score
+        callsign = summary['callsign']
+        try:
+            category = categories[int(summary['category'])]
+        except:
+            category = 'unknown'
+        try:
+            podxs_number = summary['070-number']
+        except:
+            podxs_number = 'unknown'
+        try:
+            om_yl = summary['Old Man / Young Lady'].upper()
+        except:
+            om_yl = None
+        email = summary['email']
+        q_points = scores['q-points']
+        dxcc = len(scores['mults']['dxcc']['data'])
+        state = len(scores['mults']['state'])
+        total = scores['total']
+
+        if om_yl != None:
+            yl_count = scores['mults']['yl']
+            print('callsign,category,OM/YL,070-number,email,q-points,yl-count,dxcc-mult,state-mult,total')
+            print('{},{},{},{},{},{},{},{},{},{}'.format(
+                callsign,
+                category,
+                om_yl,
+                podxs_number,
+                email,
+                q_points,
+                yl_count,
+                dxcc,
+                state,
+                total,
+            )
+            )
+        else:
+            print('callsign,category,070-number,email,q-points,dxcc-mult,state-mult,total')
+            print('{},{},{},{},{},{},{},{}'.format(
+                callsign,
+                category,
+                podxs_number,
+                email,
+                q_points,
+                dxcc,
+                state,
+                total,
+            )
+            )
+    else:
+        if scores['mults']['yl']:
+            print('\nQs:{} YL:{} DXCC:{} STATE:{} Total:{}'.format(
+                scores['q-points'],
+                scores['mults']['yl'],
+                len(scores['mults']['dxcc']['data']),
+                len(scores['mults']['state']),
+                scores['total']
+            )
+            )
+        else:
+            print('\nQs:{} DXCC:{} STATE:{} Total:{}'.format(
+                scores['q-points'],
+                len(scores['mults']['dxcc']['data']),
+                len(scores['mults']['state']),
+                scores['total']
+            )
+            )
+        if scores['mults']['dxcc']['errors']:
+            for error in scores['mults']['dxcc']['errors']:
+                print('DXCC ERRORS: {},{},{}'.format(
+                    error['call']['data'],
+                    error['qso_date']['data'],
+                    error['time_on']['data'],
+                )
+                )
+
+
+def print_header(valid=True):
+    if valid:
+        print("\ncall,qso_date,time_on,band,srx_string,dxcc,state")
+    else:
+        print("\ncall,qso_date,time_on,band,srx_string,dxcc,state,errors")
+
+
+def print_title_block(summary):
+    try:
+        category = categories[int(summary['category'])]
+    except:
+        category = 'unknown'
+    try:
+        podxs_number = summary['070-number']
+    except:
+        podxs_number = 'unknown'
+    try:
+        om_yl = summary['Old Man / Young Lady'].upper()
+    except:
+        om_yl = None
+
+    if om_yl is None:
+        print('\nCALL:{}\nPOWER:{}\nEMAIL:{}\n'.format(
+            summary['callsign'],
+            category,
+            summary['email'],
+        )
+        )
+    else:
+        print('\nCALL:{}\nPOWER:{}\nCATEGORY:{}\nSTART TIME:{}\nEMAIL:{}\n'.format(
+            summary['callsign'],
+            category,
+            om_yl,
+            summary['Block start time'],
+            summary['email'],
+        )
+        )
 
 
 if __name__ == '__main__':
