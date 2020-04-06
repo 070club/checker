@@ -679,6 +679,33 @@ def vdsprint_2020(adif_files, summary):
     return valid_records, invalid_records, scores
 
 
+def saintpats_2019(adif_files, summary):
+    return None
+
+
+def saintpats_2020(adif_files, summary):
+    conditions = {'valid_dates': [20200321],
+                  'valid_modes': ['psk', 'bpsk', 'psk31', 'bpsk31', 'qpsk31'],
+                  'valid_bands': ['6m', '10m', '15m', '20m', '40m', '80m', '160m'],
+                  }
+    valid_records = []
+    invalid_records = []
+    # loop through adif files
+    # for each adif file, grab summary info
+    for entry in adif_files:
+        for record in adif_files[entry]:
+            s_record = synthesize_fields(record)
+            status, errors = test_record(s_record, conditions, summary, valid_records)
+            if errors:
+                invalid_records.append({'data': s_record, 'errors': errors})
+            else:
+                valid_records.append(s_record)
+    scores = calc_scores(valid_records)
+    scores['mults']['egb'] = calc_egb(valid_records)
+    scores['total'] += scores['mults']['egb']['bonus']
+    return valid_records, invalid_records, scores
+
+
 def synthesize_fields(record):
     """Method to build synthetic fields for the values we care about if they are
         empty or broken or something else (e.g., build band from freq)"""
@@ -712,6 +739,7 @@ def synthesize_fields(record):
 
 def get_om_yl(record):
     """ look for OM or YL in various places for the Valentine's Sprint"""
+    # TODO : Add a search in the summary for YL
 
     if 'app_n1mm_misctext' in record:
         n1mm_data = re.split('[\W\s]{1}', record['app_n1mm_misctext']['data'])
@@ -770,6 +798,8 @@ def get_state(record):
                 return {'length': len(element), 'data': element.upper()}
             if element.upper() in dxcc_1_states.keys():
                 return {'length': len(element), 'data': element.upper()}
+            if element.upper() in ['AK', 'HI']:
+                return {'length': len(element), 'data': element.upper()}
     if 'rst_rcvd' in record:
         rst_data = re.split('[\W\s]{1}', record['rst_rcvd']['data'])
         for element in rst_data:
@@ -804,6 +834,12 @@ def get_state(record):
 
 
 def get_dxcc(record):
+    if 'country' in record:
+        if record['country']['data'].upper() in ['US', 'USA', 'UNITED STATES']:
+            return {'length': 3, 'data': '291'}
+        for entity in dxcc_entities:
+            if record['country']['data'].upper() == dxcc_entities[entity]['name']:
+                return {'length': len(entity), 'data': entity.upper()}
     if 've_prov' in record:
         return {'length': 1, 'data': '1'}
     if 'state' in record:
@@ -811,6 +847,10 @@ def get_dxcc(record):
             return {'length': 1, 'data': '1'}
         elif record['state']['data'].upper() in dxcc_291_states.keys():
             return {'length': 3, 'data': '291'}
+        elif record['state']['data'].upper() == 'AK':
+            return {'length': 1, 'data': '6'}
+        elif record['state']['data'].upper() == 'HI':
+            return {'length': 3, 'data': '110'}
     if 'app_n1mm_exchange1' in record:
         if record['app_n1mm_exchange1']['data'].upper() in dxcc_1_states.keys():
             return {'length': 1, 'data': '1'}
@@ -822,12 +862,6 @@ def get_dxcc(record):
             for entity in dxcc_entities:
                 if element.upper() == dxcc_entities[entity]['name']:
                     return {'length': len(entity), 'data': entity.upper()}
-    if 'country' in record:
-        if record['country']['data'].upper() in ['US', 'USA', 'UNITED STATES']:
-            return {'length': 3, 'data': '291'}
-        for entity in dxcc_entities:
-            if record['country']['data'].upper() == dxcc_entities[entity]['name']:
-                return {'length': len(entity), 'data': entity.upper()}
     return None
 
 
@@ -888,14 +922,64 @@ def calc_scores(valid_records):
         except:
             pass
     scores['total'] = (len(scores['mults']['dxcc']['data']) + len(scores['mults']['state'])) * (
-                scores['q-points'] + scores['mults']['yl'])
+            scores['q-points'] + scores['mults']['yl'])
     return scores
+
+
+def calc_egb(valid_records):
+    """Find Erin Go Bragh bonuses"""
+    """Spell "Erin" and claim 100 Bonus Points.
+        Spell "Go" and claim 100 Bonus Points.
+        Spell "Bragh" and claim 100 Bonus Points.
+        Spell the entire "Erin Go Bragh" and claim 
+        an additional 200 points for a total of 500 Bonus Points.
+    """
+    egb = {
+        'bonus': 0,
+        'erin': {
+            'letters': ['E', 'R', 'I', 'N'],
+            'callsigns': []
+        },
+        'go': {
+            'letters': ['G', 'O'],
+            'callsigns': []
+        },
+        'bragh': {
+            'letters': ['B', 'R', 'A', 'G', 'H'],
+            'callsigns': []
+        },
+    }
+    for rec in valid_records:
+        # TODO: Make the suffix identification more robust (ie, account for weird digit placement)
+        suffix = re.split('\d+', rec['call']['data'])
+        try:
+            testchar = suffix[1][0].upper()
+        except:
+            print (rec)
+
+        if testchar in egb['erin']['letters']:
+            egb['erin']['letters'].remove(testchar)
+            egb['erin']['callsigns'].append(rec['call'])
+        elif testchar in egb['go']['letters']:
+            egb['go']['letters'].remove(testchar)
+            egb['go']['callsigns'].append(rec['call'])
+        elif testchar in egb['bragh']['letters']:
+            egb['bragh']['letters'].remove(testchar)
+            egb['bragh']['callsigns'].append(rec['call'])
+
+    if len(egb['erin']['letters']) == 0: egb['bonus'] += 100
+    if len(egb['go']['letters']) == 0: egb['bonus'] += 100
+    if len(egb['bragh']['letters']) == 0: egb['bonus'] += 100
+    if egb['bonus'] == 300: egb['bonus'] += 200
+
+    return egb
 
 
 def summary_parser(inputfile, delim):
     import csv
     summary = {}
-    with open(inputfile, newline='', encoding='utf-16') as csvfile:
+    #with open(inputfile, newline='', encoding='utf-16') as csvfile:
+    with open(inputfile, newline='') as csvfile:
         reader = csv.DictReader(csvfile, delimiter=delim)
         for row in reader:
             summary[row['callsign']] = row
@@ -955,27 +1039,34 @@ def rec_in_bands(entry, valid_bands, summary):
 
 
 def rec_in_window(entry, valid_dates, summary):
-    # take the adif record and compare against valid
-    # dates and times
+    """take the adif record and compare against valid dates and times """
     # TODO Need to generalize for multi-windows (eg, TDW)
     # TODO Need to standardize on form field names
+    # TODO Need to cover contests that do and don't use blocks
 
-    block_start = int(summary['Block start time'])
-    block_end = block_start + 600
-    if block_end > 2359:
-        block_end = 2359
-    if entry['time_on']['length'] == 6:
-        block_start *= 100
-        block_end *= 100
-
-    # print("qso_date: {} valid_dates: {}".format(entry['qso_date']['data'],valid_dates))
-    if int(entry['qso_date']['data']) in valid_dates:
-        if block_start <= int(entry['time_on']['data']) <= block_end:
+    try:
+        block_start = int(summary['Block start time'])
+    except:
+        if int(entry['qso_date']['data']) in valid_dates:
             return True
         else:
             return False
     else:
-        return False
+        block_end = block_start + 600
+        if block_end > 2359:
+            block_end = 2359
+        if entry['time_on']['length'] == 6:
+            block_start *= 100
+            block_end *= 100
+
+        # print("qso_date: {} valid_dates: {}".format(entry['qso_date']['data'],valid_dates))
+        if int(entry['qso_date']['data']) in valid_dates:
+            if block_start <= int(entry['time_on']['data']) <= block_end:
+                return True
+            else:
+                return False
+        else:
+            return False
 
 
 def rec_is_psk(entry, valid_modes, summary):
@@ -1105,27 +1196,37 @@ def print_entries(entries, valid=True):
 
 
 def print_score(scores, summary):
-    if summary:  # Report only, spit out CSV of call+score
+    try:
         callsign = summary['callsign']
-        try:
-            category = categories[int(summary['category'])]
-        except:
-            category = 'unknown'
-        try:
-            podxs_number = summary['070-number']
-        except:
-            podxs_number = 'unknown'
-        try:
-            om_yl = summary['Old Man / Young Lady'].upper()
-        except:
-            om_yl = None
+    except:
+        callsign = None
+    try:
+        category = categories[int(summary['category'])]
+    except:
+        category = 'unknown'
+    try:
+        podxs_number = summary['070-number']
+    except:
+        podxs_number = 'unknown'
+    try:
+        om_yl = summary['Old Man / Young Lady'].upper()
+    except:
+        om_yl = None
+    try:
+        egb_bonus = scores['mults']['egb']['bonus']
+    except:
+        egb_bonus = None
+    try:
         email = summary['email']
-        q_points = scores['q-points']
-        dxcc = len(scores['mults']['dxcc']['data'])
-        state = len(scores['mults']['state'])
-        total = scores['total']
+    except:
+        email = None
+    q_points = scores['q-points']
+    dxcc = len(scores['mults']['dxcc']['data'])
+    state = len(scores['mults']['state'])
+    total = scores['total']
 
-        if om_yl != None:
+    if summary is not None:  # Report only, spit out CSV of call+score
+        if om_yl is not None:
             yl_count = scores['mults']['yl']
             print('callsign,category,OM/YL,070-number,email,q-points,yl-count,dxcc-mult,state-mult,total')
             print('{},{},{},{},{},{},{},{},{},{}'.format(
@@ -1138,6 +1239,20 @@ def print_score(scores, summary):
                 yl_count,
                 dxcc,
                 state,
+                total,
+            )
+            )
+        elif egb_bonus is not None:
+            print('callsign,category,070-number,email,q-points,dxcc-mult,state-mult,EGB-bonus,total')
+            print('{},{},{},{},{},{},{},{},{}'.format(
+                callsign,
+                category,
+                podxs_number,
+                email,
+                q_points,
+                dxcc,
+                state,
+                egb_bonus,
                 total,
             )
             )
@@ -1155,7 +1270,7 @@ def print_score(scores, summary):
             )
             )
     else:
-        if scores['mults']['yl']:
+        if om_yl is not None:
             print('\nQs:{} YL:{} DXCC:{} STATE:{} Total:{}'.format(
                 scores['q-points'],
                 scores['mults']['yl'],
@@ -1164,6 +1279,25 @@ def print_score(scores, summary):
                 scores['total']
             )
             )
+        elif egb_bonus is not None:
+            print('\nQs:{} EGB:{} DXCC:{} STATE:{} Total:{}'.format(
+                scores['q-points'],
+                scores['mults']['egb']['bonus'],
+                len(scores['mults']['dxcc']['data']),
+                len(scores['mults']['state']),
+                scores['total']
+            )
+            )
+            # list EGB calls
+            if len(scores['mults']['egb']['erin']['callsigns']) > 0:
+                print( 'Erin:' )
+                for call in scores['mults']['egb']['erin']['callsigns']: print('    {}'.format(call['data']))
+            if len(scores['mults']['egb']['go']['callsigns']) > 0:
+                print( 'Go:' )
+                for call in scores['mults']['egb']['go']['callsigns']: print('    {}'.format(call['data']))
+            if len(scores['mults']['egb']['bragh']['callsigns']) > 0:
+                print('Bragh:')
+                for call in scores['mults']['egb']['bragh']['callsigns']: print('    {}'.format(call['data']))
         else:
             print('\nQs:{} DXCC:{} STATE:{} Total:{}'.format(
                 scores['q-points'],
