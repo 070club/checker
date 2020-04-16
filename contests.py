@@ -5,11 +5,11 @@
 # module for calculating contest results
 
 # Things to add
-# TODO : divine State from ARRL section
 # TODO : handle missing MODE exception (W3SW example)
 
 import re
 import sys
+import datetime
 
 # Enumerations
 categories = {
@@ -495,94 +495,93 @@ dxcc_291_states = {
 
 
 # ARRL sections
-# arrl_section_to_state = {
-#  'AL': { 'name': 'Alabama',	291
-#  'AK': { 'name': 'Alaska',	6
-#  'AB': { 'name': 'Alberta',	1
-#  'AR': { 'name': 'Arkansas',	291
-#  'AZ': { 'name': 'Arizona',	291
-#  'BC': { 'name': 'British Columbia',	1
-#  'CO': { 'name': 'Colorado',	291
-#  'CT': { 'name': 'Connecticut',	291
-#  'DE': { 'name': 'Delaware',	291
-#  'EB': { 'name': 'East Bay',	291
-#  'EMA': { 'name': 'Eastern Massachusetts',	291
-#  'ENY': { 'name': 'Eastern New York',	291
-#  'EPA': { 'name': 'Eastern Pennsylvania',	291
-#  'EWA': { 'name': 'Eastern Washington',	291
-#  'GA': { 'name': 'Georgia',	291
-#  'GTA': { 'name': 'Greater Toronto Area',	1	2012/09/01
-#  'ID': { 'name': 'Idaho',	291
-#  'IL': { 'name': 'Illinois',	291
-#  'IN': { 'name': 'Indiana',	291
-#  'IA': { 'name': 'Iowa',	291
-#  'KS': { 'name': 'Kansas',	291
-#  'KY': { 'name': 'Kentucky',	291
-#  'LAX': { 'name': 'Los Angeles',	291
-#  'LA': { 'name': 'Louisiana',	291
-#  'ME': { 'name': 'Maine',	1
-#  'MB': { 'name': 'Manitoba',	1
-#  'MAR': { 'name': 'Maritime',	1
-#  'MDC': { 'name': 'Maryland-DC',	291
-#  'MI': { 'name': 'Michigan',	291
-#  'MN': { 'name': 'Minnesota',	291
-#  'MS': { 'name': 'Mississippi',	291
-#  'MO': { 'name': 'Missouri',	291
-#  'MT': { 'name': 'Montana',	291
-#  'NE': { 'name': 'Nebraska',	291
-#  'NV': { 'name': 'Nevada',	291
-#  'NH': { 'name': 'New Hampshire',	291
-#  'NM': { 'name': 'New Mexico',	291
-#  'NLI': { 'name': 'New York City-Long Island',	291
-#  'NL': { 'name': 'Newfoundland/Labrador',	1
-#  'NC': { 'name': 'North Carolina',	291
-#  'ND': { 'name': 'North Dakota',	291
-#  'NTX': { 'name': 'North Texas',	291
-#  'NFL': { 'name': 'Northern Florida',	291
-#  'NNJ': { 'name': 'Northern New Jersey',	291
-#  'NNY': { 'name': 'Northern New York',	291
-#  'NT': { 'name': 'Northwest Territories/Yukon/Nunavut',	1	2003/11/01
-#  'NWT': { 'name': 'Northwest Territories/Yukon/Nunavut (replaced by NT)',	1	 	2003/11/01
-#  'OH': { 'name': 'Ohio',	291
-#  'OK': { 'name': 'Oklahoma',	291
-#  'ON': { 'name': 'Ontario(replaced by GTA, ONE, ONN, and ONS)',	1	 	2012/09/01
-#  'ONE': { 'name': 'Ontario East',	1	2012/09/01
-#  'ONN': { 'name': 'Ontario North',	1	2012/09/01
-#  'ONS': { 'name': 'Ontario South',	1	2012/09/01
-#  'ORG': { 'name': 'Orange',	291
-#  'OR': { 'name': 'Oregon',	291
-#  'PAC': { 'name': 'Pacific',	9, 20, 103, 110, 123, 134, 138, 166, 174, 197, 297, 515
-#  'PR': { 'name': 'Puerto Rico',	43, 202
-#  'QC': { 'name': 'Quebec',	1
-#  'RI': { 'name': 'Rhode Island',	291
-#  'SV': { 'name': 'Sacramento Valley',	291
-#  'SDG': { 'name': 'San Diego',	291
-#  'SF': { 'name': 'San Francisco',	291
-#  'SJV': { 'name': 'San Joaquin Valley',	291
-#  'SB': { 'name': 'Santa Barbara',	291
-#  'SCV': { 'name': 'Santa Clara Valley',	291
-#  'SK': { 'name': 'Saskatchewan',	1
-#  'SC': { 'name': 'South Carolina',	291
-#  'SD': { 'name': 'South Dakota',	291
-#  'STX': { 'name': 'South Texas',	291
-#  'SFL': { 'name': 'Southern Florida',	291
-#  'SNJ': { 'name': 'Southern New Jersey',	291
-#  'TN': { 'name': 'Tennessee',	291
-#  'VI': { 'name': 'US Virgin Islands',	105, 182, 285
-#  'UT': { 'name': 'Utah',	291
-#  'VT': { 'name': 'Vermont',	291
-#  'VA': { 'name': 'Virginia',	291
-#  'WCF': { 'name': 'West Central Florida',	291
-#  'WTX': { 'name': 'West Texas',	291
-#  'WV': { 'name': 'West Virginia',	291
-#  'WMA': { 'name': 'Western Massachusetts',	291
-#  'WNY': { 'name': 'Western New York',	291
-#  'WPA': { 'name': 'Western Pennsylvania',	291
-#  'WWA': { 'name': 'Western Washington',	291
-#  'WI': { 'name': 'Wisconsin',	291
-#  'WY': { 'name': 'Wyoming',	291
-
-# }
+arrl_section_to_state = {
+    'AL': {'state': 'AL', 'name': 'Alabama', 'dxcc' : [291] },
+    'AK': {'state': 'AK', 'name': 'Alaska', 'dxcc' : [6] },
+    'AB': {'state': 'AB', 'name': 'Alberta', 'dxcc' : [1] },
+    'AR': {'state': 'AR', 'name': 'Arkansas', 'dxcc' : [291] },
+    'AZ': {'state': 'AZ', 'name': 'Arizona', 'dxcc' : [291] },
+    'BC': {'state': 'BC', 'name': 'British Columbia', 'dxcc' : [1] },
+    'CO': {'state': 'CO', 'name': 'Colorado', 'dxcc' : [291] },
+    'CT': {'state': 'CT', 'name': 'Connecticut', 'dxcc' : [291] },
+    'DE': {'state': 'DE', 'name': 'Delaware', 'dxcc' : [291] },
+    'EB': {'state': 'CA', 'name': 'East Bay', 'dxcc' : [291] },
+    'EMA': {'state': 'MA', 'name': 'Eastern Massachusetts', 'dxcc' : [291] },
+    'ENY': {'state': 'NY', 'name': 'Eastern New York', 'dxcc' : [291] },
+    'EPA': {'state': 'PA', 'name': 'Eastern Pennsylvania', 'dxcc' : [291] },
+    'EWA': {'state': 'WA', 'name': 'Eastern Washington', 'dxcc' : [291] },
+    'GA': {'state':  'GA', 'name': 'Georgia', 'dxcc' : [291] },
+    'GTA': {'state': 'ON', 'name': 'Greater Toronto Area', 'dxcc' : [1], 'from' : '2012/09/01' },
+    'ID': {'state':  'ID', 'name': 'Idaho', 'dxcc' : [291] },
+    'IL': {'state': 'IL', 'name': 'Illinois', 'dxcc' : [291] },
+    'IN': {'state': 'IN', 'name': 'Indiana', 'dxcc' : [291] },
+    'IA': {'state': 'IA', 'name': 'Iowa', 'dxcc' : [291] },
+    'KS': {'state': 'KS', 'name': 'Kansas', 'dxcc' : [291] },
+    'KY': {'state': 'KY', 'name': 'Kentucky', 'dxcc' : [291] },
+    'LAX': {'state': 'CA', 'name': 'Los Angeles', 'dxcc' : [291] },
+    'LA': {'state': 'LA', 'name': 'Louisiana', 'dxcc' : [291] },
+    'ME': {'state': 'ME', 'name': 'Maine', 'dxcc': [1] },
+    'MB': {'state': 'MB', 'name': 'Manitoba', 'dxcc': [1] },
+    'MAR': {'state': '', 'name': 'Maritime', 'dxcc': [1] },
+    'MDC': {'state': 'MD', 'name': 'Maryland-DC', 'dxcc' : [291] },
+    'MI': {'state': 'MI', 'name': 'Michigan', 'dxcc' : [291] },
+    'MN': {'state': 'MN', 'name': 'Minnesota', 'dxcc' : [291] },
+    'MS': {'state': 'MS', 'name': 'Mississippi', 'dxcc' : [291] },
+    'MO': {'state': 'MO', 'name': 'Missouri', 'dxcc' : [291] },
+    'MT': {'state': 'MT', 'name': 'Montana', 'dxcc' : [291] },
+    'NE': {'state': 'NE', 'name': 'Nebraska', 'dxcc' : [291] },
+    'NV': {'state': 'NV', 'name': 'Nevada', 'dxcc' : [291] },
+    'NH': {'state': 'NH', 'name': 'New Hampshire', 'dxcc' : [291] },
+    'NM': {'state': 'NM', 'name': 'New Mexico', 'dxcc' : [291] },
+    'NLI': {'state': 'NY', 'name': 'New York City-Long Island', 'dxcc' : [291] },
+    'NL': {'state': 'NL', 'name': 'Newfoundland/Labrador', 'dxcc': [1] },
+    'NC': {'state': 'NC', 'name': 'North Carolina', 'dxcc' : [291] },
+    'ND': {'state': 'ND', 'name': 'North Dakota', 'dxcc' : [291] },
+    'NTX': {'state': 'TX', 'name': 'North Texas', 'dxcc' : [291] },
+    'NFL': {'state': 'FL', 'name': 'Northern Florida', 'dxcc' : [291] },
+    'NNJ': {'state': 'NJ', 'name': 'Northern New Jersey', 'dxcc' : [291] },
+    'NNY': {'state': 'NY', 'name': 'Northern New York', 'dxcc' : [291] },
+    'NT': {'state':  'NT', 'name': 'Northwest Territories/Yukon/Nunavut', 'dxcc': [1], 'from': '2003/11/01' },
+    'NWT': {'state': 'NT', 'name': 'Northwest Territories/Yukon/Nunavut (replaced by NT)', 'dxcc': [1], 'deleted': '2003/11/01' },
+    'OH': {'state': 'OH', 'name': 'Ohio', 'dxcc' : [291] },
+    'OK': {'state': 'OK', 'name': 'Oklahoma', 'dxcc' : [291] },
+    'ON': {'state': 'ON', 'name': 'Ontario(replaced by GTA, ONE, ONN, and ONS)', 'dxcc': [1], 'deleted': '2012/09/01' },
+    'ONE': {'state': 'ON', 'name': 'Ontario East','dxcc': [1], 'from': '2012/09/01' },
+    'ONN': {'state': 'ON', 'name': 'Ontario North','dxcc': [1], 'from': '2012/09/01' },
+    'ONS': {'state': 'ON', 'name': 'Ontario South','dxcc': [1], 'from': '2012/09/01' },
+    'ORG': {'state': '', 'name': 'Orange', 'dxcc' : [291] },
+    'OR': {'state': 'OR', 'name': 'Oregon', 'dxcc' : [291] },
+    'PAC': {'state': '', 'name': 'Pacific', 'dxcc' : [9, 20, 103, 110, 123, 134, 138, 166, 174, 197, 297, 515] },
+    'PR': {'state': 'PR', 'name': 'Puerto Rico','dxcc': [43, 202] },
+    'QC': {'state': 'QC', 'name': 'Quebec', 'dxcc': [1] },
+    'RI': {'state': 'RI', 'name': 'Rhode Island', 'dxcc' : [291] },
+    'SV': {'state': 'CA', 'name': 'Sacramento Valley', 'dxcc' : [291] },
+    'SDG': {'state': 'CA', 'name': 'San Diego', 'dxcc' : [291] },
+    'SF': {'state': 'CA', 'name': 'San Francisco', 'dxcc' : [291] },
+    'SJV': {'state': 'CA', 'name': 'San Joaquin Valley', 'dxcc' : [291] },
+    'SB': {'state': 'CA', 'name': 'Santa Barbara', 'dxcc' : [291] },
+    'SCV': {'state': 'CA', 'name': 'Santa Clara Valley', 'dxcc' : [291] },
+    'SK': {'state': 'SK', 'name': 'Saskatchewan', 'dxcc': [1] },
+    'SC': {'state': 'SC', 'name': 'South Carolina', 'dxcc' : [291] },
+    'SD': {'state': 'SD', 'name': 'South Dakota', 'dxcc' : [291] },
+    'STX': {'state': 'TX', 'name': 'South Texas', 'dxcc' : [291] },
+    'SFL': {'state': 'FL', 'name': 'Southern Florida', 'dxcc' : [291] },
+    'SNJ': {'state': 'NJ', 'name': 'Southern New Jersey', 'dxcc' : [291] },
+    'TN': {'state': 'TN', 'name': 'Tennessee', 'dxcc' : [291] },
+    'VI': {'state': 'VI', 'name': 'US Virgin Islands', 'dxcc': [105, 182, 285] },
+    'UT': {'state': 'UT', 'name': 'Utah', 'dxcc' : [291] },
+    'VT': {'state': 'VT', 'name': 'Vermont', 'dxcc' : [291] },
+    'VA': {'state': 'VA', 'name': 'Virginia', 'dxcc' : [291] },
+    'WCF': {'state': 'FL', 'name': 'West Central Florida', 'dxcc' : [291] },
+    'WTX': {'state': 'TX', 'name': 'West Texas', 'dxcc' : [291] },
+    'WV': {'state': 'WV', 'name': 'West Virginia', 'dxcc' : [291] },
+    'WMA': {'state': 'MA', 'name': 'Western Massachusetts', 'dxcc' : [291] },
+    'WNY': {'state': 'NY', 'name': 'Western New York', 'dxcc' : [291] },
+    'WPA': {'state': 'PA', 'name': 'Western Pennsylvania', 'dxcc' : [291] },
+    'WWA': {'state': 'WA', 'name': 'Western Washington', 'dxcc' : [291] },
+    'WI': {'state': 'WI', 'name': 'Wisconsin', 'dxcc' : [291] },
+    'WY': {'state': 'WY', 'name': 'Wyoming', 'dxcc' : [291] },
+}
 
 # End of enumerations
 
@@ -614,7 +613,8 @@ def doubleheader_2019(adif, summary):
 
 
 def pskfest_2019(adif_files, summary):
-    conditions = {'valid_dates': [20190105],
+    conditions = { 'contest_start': datetime.datetime(2020, 1, 5, 0, 0, 0, 0),
+                   'contest_end': datetime.datetime(2020, 1, 5, 23, 59, 59, 0),
                   'valid_modes': ['psk', 'bpsk', 'psk31', 'bpsk31', 'qpsk31'],
                   'valid_bands': ['10m', '15m', '20m', '40m', '80m'],
                   }
@@ -634,7 +634,8 @@ def pskfest_2019(adif_files, summary):
 
 
 def pskfest_2020(adif_files, summary):
-    conditions = {'valid_dates': [20200104],
+    conditions = { 'contest_start': datetime.datetime(2020, 1, 4, 0, 0, 0, 0),
+                   'contest_end': datetime.datetime(2020, 1, 4, 23, 59, 59, 0),
                   'valid_modes': ['psk', 'bpsk', 'psk31', 'bpsk31', 'qpsk31'],
                   'valid_bands': ['10m', '15m', '20m', '40m', '80m'],
                   }
@@ -659,7 +660,8 @@ def vdsprint_2019(adif_files, summary):
 
 
 def vdsprint_2020(adif_files, summary):
-    conditions = {'valid_dates': [20200214],
+    conditions = { 'contest_start': datetime.datetime(2020, 2, 14, 0, 0, 0, 0),
+                   'contest_end': datetime.datetime(2020, 2, 14, 23, 59, 59, 0),
                   'valid_modes': ['psk', 'bpsk', 'psk31', 'bpsk31', 'qpsk31'],
                   'valid_bands': ['40m', '80m', '160m'],
                   }
@@ -684,7 +686,8 @@ def saintpats_2019(adif_files, summary):
 
 
 def saintpats_2020(adif_files, summary):
-    conditions = {'valid_dates': [20200321],
+    conditions = { 'contest_start': datetime.datetime(2020, 3, 21, 0, 0, 0, 0),
+                   'contest_end': datetime.datetime(2020, 3, 21, 23, 59, 59, 0),
                   'valid_modes': ['psk', 'bpsk', 'psk31', 'bpsk31', 'qpsk31'],
                   'valid_bands': ['6m', '10m', '15m', '20m', '40m', '80m', '160m'],
                   }
@@ -703,6 +706,32 @@ def saintpats_2020(adif_files, summary):
     scores = calc_scores(valid_records)
     scores['mults']['egb'] = calc_egb(valid_records)
     scores['total'] += scores['mults']['egb']['bonus']
+    return valid_records, invalid_records, scores
+
+
+def thirtyone_flavors_2020(adif_files, summary):
+    conditions = { 'contest_start': datetime.datetime(2020, 4, 4, 10, 00, 00, 0),
+                  'contest_end': datetime.datetime(2020, 4, 5, 3, 59, 59, 0),
+                  'valid_modes': ['psk', 'bpsk',
+                                  'psk31', 'bpsk31', 'qpsk31',
+                                  'psk63', 'bpsk63', 'qpsk63',
+                                  'psk125', 'bpsk125', 'qpsk125',
+                                  ],
+                  'valid_bands': ['20m'],
+                  }
+    valid_records = []
+    invalid_records = []
+    # loop through adif files
+    # for each adif file, grab summary info
+    for entry in adif_files:
+        for record in adif_files[entry]:
+            s_record = synthesize_fields(record)
+            status, errors = test_record(s_record, conditions, summary, valid_records)
+            if errors:
+                invalid_records.append({'data': s_record, 'errors': errors})
+            else:
+                valid_records.append(s_record)
+    scores = calc_scores_31flavors(valid_records)
     return valid_records, invalid_records, scores
 
 
@@ -734,6 +763,8 @@ def synthesize_fields(record):
         dxcc = get_dxcc(record)
         if dxcc:
             s_record['dxcc'] = dxcc
+    if 'submode' in record: # 31 Flavors put submode in mode
+        s_record['mode'] = record['submode']
     return s_record
 
 
@@ -790,7 +821,23 @@ def get_state(record):
     if 've_prov' in record:
         return record['ve_prov']
     if 'app_n1mm_exchange1' in record:
-        return record['app_n1mm_exchange1']
+        n1mm_data = re.split('[\W\s]{1}', record['app_n1mm_exchange1']['data'])
+        for element in n1mm_data:
+            if element.upper() in dxcc_291_states.keys():
+                return {'length': len(element), 'data': element.upper()}
+            if element.upper() in dxcc_1_states.keys():
+                return {'length': len(element), 'data': element.upper()}
+            if element.upper() in ['AK', 'HI']:
+                return {'length': len(element), 'data': element.upper()}
+    if 'app_n1mm_misctext' in record:
+        n1mm_data = re.split('[\W\s]{1}', record['app_n1mm_misctext']['data'])
+        for element in n1mm_data:
+            if element.upper() in dxcc_291_states.keys():
+                return {'length': len(element), 'data': element.upper()}
+            if element.upper() in dxcc_1_states.keys():
+                return {'length': len(element), 'data': element.upper()}
+            if element.upper() in ['AK', 'HI']:
+                return {'length': len(element), 'data': element.upper()}
     if 'srx_string' in record:
         srx_data = re.split('[\W\s]{1}', record['srx_string']['data'])
         for element in srx_data:
@@ -799,6 +846,13 @@ def get_state(record):
             if element.upper() in dxcc_1_states.keys():
                 return {'length': len(element), 'data': element.upper()}
             if element.upper() in ['AK', 'HI']:
+                return {'length': len(element), 'data': element.upper()}
+    if 'notes' in record:
+        notes_data = re.split('[\W\s]{1}', record['notes']['data'])
+        for element in notes_data:
+            if element.upper() in dxcc_291_states.keys():
+                return {'length': len(element), 'data': element.upper()}
+            if element.upper() in dxcc_1_states.keys():
                 return {'length': len(element), 'data': element.upper()}
     if 'rst_rcvd' in record:
         rst_data = re.split('[\W\s]{1}', record['rst_rcvd']['data'])
@@ -829,7 +883,9 @@ def get_state(record):
                 if element in dxcc_1_states.keys():
                     return {'length': len(element), 'data': element}
     if 'section' in record:  # Scraping the bottom of the barrel (section is not the same as State)
-        return record['section']
+        if record['section']['data'] in arrl_section_to_state:
+            section_state = arrl_section_to_state[record['section']['data']]['state']
+            return {'length': len(section_state), 'data': section_state }
     return None
 
 
@@ -856,12 +912,22 @@ def get_dxcc(record):
             return {'length': 1, 'data': '1'}
         elif record['app_n1mm_exchange1']['data'].upper() in dxcc_291_states.keys():
             return {'length': 3, 'data': '291'}
+        else:
+            for entity in dxcc_entities:
+                if record['app_n1mm_exchange1']['data'].upper() == dxcc_entities[entity]['name']:
+                    return {'length': len(entity), 'data': entity.upper()}
     if 'srx_string' in record:
         srx_data = re.split('[\W\s]{1}', record['srx_string']['data'])
         for element in srx_data:
             for entity in dxcc_entities:
                 if element.upper() == dxcc_entities[entity]['name']:
                     return {'length': len(entity), 'data': entity.upper()}
+    if 'qth' in record:
+        if record['qth']['data'].upper() in ['US', 'USA', 'UNITED STATES']:
+            return {'length': 3, 'data': '291'}
+        for entity in dxcc_entities:
+            if record['qth']['data'].upper() == dxcc_entities[entity]['name']:
+                return {'length': len(entity), 'data': entity.upper()}
     return None
 
 
@@ -951,6 +1017,8 @@ def calc_egb(valid_records):
     }
     for rec in valid_records:
         # TODO: Make the suffix identification more robust (ie, account for weird digit placement)
+        #       for example: DU1/N6HPX should be "H"
+
         suffix = re.split('\d+', rec['call']['data'])
         try:
             testchar = suffix[1][0].upper()
@@ -971,8 +1039,40 @@ def calc_egb(valid_records):
     if len(egb['go']['letters']) == 0: egb['bonus'] += 100
     if len(egb['bragh']['letters']) == 0: egb['bonus'] += 100
     if egb['bonus'] == 300: egb['bonus'] += 200
-
     return egb
+
+
+def calc_scores_31flavors(valid_records):
+    scores = {
+        'dxccmult' : 0,
+        'statemult' : 0,
+        'q-points' : len(valid_records),
+        'mults' : {},
+    }
+    for rec in valid_records:
+        mode = rec['mode']['data']
+        scores['mults'].setdefault(mode, {
+            'dxcc' : { 'data' : [], 'errors' : [], },
+            'state' : [],
+        })
+        try:
+            if rec['dxcc']['data'] not in scores['mults'][mode]['dxcc']['data']:
+                scores['mults'][mode]['dxcc']['data'].append(rec['dxcc']['data'])
+        except KeyError:
+            scores['mults'][mode]['dxcc']['errors'].append(rec)
+        try:
+            # For now, assuming only US and Canada for states
+            if rec['state']['data'].upper() not in scores['mults'][mode]['state'] and \
+                    int(rec['dxcc']['data']) in [1, 6, 110, 291]:
+                scores['mults'][mode]['state'].append(rec['state']['data'].upper())
+        except:
+            pass
+
+    for modedict in scores['mults']:
+        scores['dxccmult'] += len(scores['mults'][modedict]['dxcc']['data'])
+        scores['statemult'] += len(scores['mults'][modedict]['state'])
+    scores['total'] = (scores['dxccmult'] + scores['statemult']) * scores['q-points']
+    return scores
 
 
 def summary_parser(inputfile, delim):
@@ -982,7 +1082,7 @@ def summary_parser(inputfile, delim):
     with open(inputfile, newline='') as csvfile:
         reader = csv.DictReader(csvfile, delimiter=delim)
         for row in reader:
-            summary[row['callsign']] = row
+            summary[row['Callsign']] = row
     return summary
 
 
@@ -994,7 +1094,7 @@ def test_record(entry, conditions, summary, valid_records):
     if rec_in_bands(entry, conditions['valid_bands'], summary):
         errors.remove('not_valid_band')
 
-    if rec_in_window(entry, conditions['valid_dates'], summary):
+    if rec_in_window(entry, conditions, summary):
         errors.remove('not_in_window')
 
     if rec_is_psk(entry, conditions['valid_modes'], summary):
@@ -1013,11 +1113,11 @@ def rec_is_not_dupe(entry, valid_entries):
     # check to see if the same combo already exists in valid_entries
     if len(valid_entries) != 0:
         try:
-            check_value = entry['qso_date']['data'] + entry['call']['data'] + entry['band']['data']
+            check_value = entry['qso_date']['data'] + entry['call']['data'] + entry['band']['data'] + entry['mode']['data']
         except:
             return False
         for record in valid_entries:
-            dupe_check = record['qso_date']['data'] + record['call']['data'] + record['band']['data']
+            dupe_check = record['qso_date']['data'] + record['call']['data'] + record['band']['data'] + record['mode']['data']
             if check_value.lower() == dupe_check.lower():
                 return False
         return True
@@ -1038,35 +1138,42 @@ def rec_in_bands(entry, valid_bands, summary):
         return False
 
 
-def rec_in_window(entry, valid_dates, summary):
+def rec_in_window(entry, conditions, summary):
     """take the adif record and compare against valid dates and times """
     # TODO Need to generalize for multi-windows (eg, TDW)
     # TODO Need to standardize on form field names
-    # TODO Need to cover contests that do and don't use blocks
 
-    try:
-        block_start = int(summary['Block start time'])
-    except:
-        if int(entry['qso_date']['data']) in valid_dates:
+    qso_start_string = entry['qso_date']['data'] + entry['time_on']['data']
+    if entry['time_on']['length'] == 6:
+        qso_dt = datetime.datetime.strptime(qso_start_string, '%Y%m%d%H%M%S')
+    else:
+        qso_dt = datetime.datetime.strptime(qso_start_string, '%Y%m%d%H%M')
+
+    if conditions['contest_start'] <= qso_dt <= conditions['contest_end']:
+        try:
+            block_start = int(summary['Block start time'])
+        except KeyError:
             return True
         else:
-            return False
-    else:
-        block_end = block_start + 600
-        if block_end > 2359:
-            block_end = 2359
-        if entry['time_on']['length'] == 6:
-            block_start *= 100
-            block_end *= 100
+            if summary['Contest Name'] == '31flavors':
+                if 1000 <= block_start <= 2359:
+                    block_start_string = conditions['contest_start'].strftime('%Y%m%d') + '{:0>4}'.format(summary['Block start time'])
+                else:
+                    day2 = conditions['contest_start'] + datetime.timedelta(days=1)
+                    block_start_string = day2.strftime('%Y%m%d') + '{:0>4}'.format(summary['Block start time'])
+            else:
+                block_start_string = conditions['contest_start'].strftime('%Y%m%d') + '{:0>4}'.format(summary['Block start time'])
+            block_start_dt = datetime.datetime.strptime(block_start_string, '%Y%m%d%H%M')
+            block_end_dt = block_start_dt + datetime.timedelta(hours=6)
+            if block_end_dt > conditions['contest_end']:
+                block_end_dt = conditions['contest_end']
 
-        # print("qso_date: {} valid_dates: {}".format(entry['qso_date']['data'],valid_dates))
-        if int(entry['qso_date']['data']) in valid_dates:
-            if block_start <= int(entry['time_on']['data']) <= block_end:
+            if block_start_dt <= qso_dt < block_end_dt:
                 return True
             else:
                 return False
-        else:
-            return False
+    else:
+        return False
 
 
 def rec_is_psk(entry, valid_modes, summary):
@@ -1107,24 +1214,27 @@ def print_entries(entries, valid=True):
                     srx_string = rec['srx']['data']
                 except:
                     try:
-                        srx_string = rec['comment']['data']
+                        srx_string = rec['rst_rcvd']['data']
                     except:
                         try:
-                            srx_string = rec['notes']['data']
+                            srx_string = rec['comment']['data']
                         except:
                             try:
-                                srx_string = rec['app_n1mm_misctext']['data']
+                                srx_string = rec['notes']['data']
                             except:
                                 try:
-                                    srx_string = rec['name']['data']
+                                    srx_string = rec['app_n1mm_misctext']['data']
                                 except:
                                     try:
-                                        srx_string = rec['other']['data']
+                                        srx_string = rec['name']['data']
                                     except:
                                         try:
-                                            srx_string = rec['award']['data']
+                                            srx_string = rec['other']['data']
                                         except:
-                                            srx_string = ''
+                                            try:
+                                                srx_string = rec['award']['data']
+                                            except:
+                                                srx_string = ''
             try:
                 dxcc = rec['dxcc']['data']
             except:
@@ -1178,7 +1288,6 @@ def print_entries(entries, valid=True):
                 state = rec['data']['state']['data']
             except:
                 state = ''
-
             try:
                 print("{},{},{},{},{},{},{},{}".format(
                     call,
@@ -1194,6 +1303,133 @@ def print_entries(entries, valid=True):
             except KeyError:
                 print("KeyError for record", file=sys.stderr)
 
+
+def print_entries_31flavors(entries, valid=True):
+    if valid:
+        print('\nValid QSOs')
+        print_header_31flavors(valid=True)
+        for rec in entries:
+            try:
+                call = rec['call']['data'].upper()
+            except:
+                call = ''
+            try:
+                qso_date = rec['qso_date']['data']
+            except:
+                qso_date = ''
+            try:
+                time_on = rec['time_on']['data']
+            except:
+                time_on = ''
+            try:
+                band = rec['band']['data']
+            except:
+                band = ''
+            try:
+                mode = rec['mode']['data']
+            except:
+                mode = ''
+            try:
+                srx_string = rec['srx_string']['data']
+            except:
+                try:
+                    srx_string = rec['srx']['data']
+                except:
+                    try:
+                        srx_string = rec['rst_rcvd']['data']
+                    except:
+                        try:
+                            srx_string = rec['comment']['data']
+                        except:
+                            try:
+                                srx_string = rec['notes']['data']
+                            except:
+                                try:
+                                    srx_string = rec['app_n1mm_misctext']['data']
+                                except:
+                                    try:
+                                        srx_string = rec['name']['data']
+                                    except:
+                                        try:
+                                            srx_string = rec['other']['data']
+                                        except:
+                                            try:
+                                                srx_string = rec['award']['data']
+                                            except:
+                                                srx_string = ''
+            try:
+                dxcc = rec['dxcc']['data']
+            except:
+                dxcc = ''
+            try:
+                state = rec['state']['data'].upper()
+            except:
+                state = ''
+            try:
+                print("{},{},{},{},{},{},{},{}".format(
+                    call,
+                    qso_date,
+                    time_on,
+                    band,
+                    mode,
+                    srx_string,
+                    dxcc,
+                    state,
+                )
+                )
+            except KeyError:
+                print("KeyError for record", file=sys.stderr)
+    else:
+        print('\nBroken QSOs (check listed errors)')
+        print_header_31flavors(valid=False)
+        for rec in entries:
+            try:
+                call = rec['data']['call']['data']
+            except:
+                call = ''
+            try:
+                qso_date = rec['data']['qso_date']['data']
+            except:
+                qso_date = ''
+            try:
+                time_on = rec['data']['time_on']['data']
+            except:
+                time_on = ''
+            try:
+                band = rec['data']['band']['data']
+            except:
+                band = ''
+            try:
+                mode = rec['data']['mode']['data']
+            except:
+                mode = ''
+            try:
+                srx_string = rec['data']['srx_string']['data']
+            except:
+                srx_string = ''
+            try:
+                dxcc = rec['data']['dxcc']['data']
+            except:
+                dxcc = ''
+            try:
+                state = rec['data']['state']['data']
+            except:
+                state = ''
+            try:
+                print("{},{},{},{},{},{},{},{},{}".format(
+                    call,
+                    qso_date,
+                    time_on,
+                    band,
+                    mode,
+                    srx_string,
+                    dxcc,
+                    state,
+                    '|'.join(rec['errors']),
+                )
+                )
+            except KeyError:
+                print("KeyError for record", file=sys.stderr)
 
 def print_score(scores, summary):
     try:
@@ -1316,11 +1552,85 @@ def print_score(scores, summary):
                 )
 
 
+
+def print_score_31flavors(scores, summary):
+    try:
+        callsign = summary['Callsign']
+    except:
+        callsign = None
+    try:
+        category = categories[int(summary['Power Level'])]
+    except:
+        category = 'unknown'
+    try:
+        podxs_number = summary['070 number']
+    except:
+        podxs_number = 'unknown'
+    try:
+        email = summary['Email']
+    except:
+        email = None
+    q_points = scores['q-points']
+    total = scores['total']
+    dxcc = 0
+    state = 0
+
+    if summary is not None:  # Report only, spit out CSV of call+score
+        for mode in scores['mults']:
+            dxcc += len(scores['mults'][mode]['dxcc']['data'])
+            state += len(scores['mults'][mode]['state'])
+        print('callsign,category,070-number,email,q-points,dxcc-mult,state-mult,total')
+        print('{},{},{},{},{},{},{},{}'.format(
+            callsign,
+            category,
+            podxs_number,
+            email,
+            q_points,
+            dxcc,
+            state,
+            total,
+        )
+        )
+    else:
+        for mode in sorted(scores['mults']):
+            dxcc += len(scores['mults'][mode]['dxcc']['data'])
+            state += len(scores['mults'][mode]['state'])
+            print('{:<8}: DXCC:{} STATE:{}'.format(
+                mode,
+                len(scores['mults'][mode]['dxcc']['data']),
+                len(scores['mults'][mode]['state']),
+            )
+            )
+        print('Qs:{} DXCC:{} STATE:{} Total:{}'.format(
+            scores['q-points'],
+            dxcc,
+            state,
+            scores['total']
+        )
+        )
+        for mode in scores['mults']:
+            if scores['mults'][mode]['dxcc']['errors']:
+                for error in scores['mults'][mode]['dxcc']['errors']:
+                    print('DXCC ERRORS: {},{},{}'.format(
+                        error['call']['data'],
+                        error['qso_date']['data'],
+                        error['time_on']['data'],
+                    )
+                    )
+
+
 def print_header(valid=True):
     if valid:
         print("\ncall,qso_date,time_on,band,srx_string,dxcc,state")
     else:
         print("\ncall,qso_date,time_on,band,srx_string,dxcc,state,errors")
+
+
+def print_header_31flavors(valid=True):
+    if valid:
+        print("\ncall,qso_date,time_on,band,mode,srx_string,dxcc,state")
+    else:
+        print("\ncall,qso_date,time_on,band,mode,srx_string,dxcc,state,errors")
 
 
 def print_title_block(summary):
@@ -1345,7 +1655,7 @@ def print_title_block(summary):
         )
         )
     else:
-        print('\nCALL:{}\nPOWER:{}\nCATEGORY:{}\nSTART TIME:{}\nEMAIL:{}\n'.format(
+        print('\nCALL:{}\nPOWER:{}\nCATEGORY:{}\nSTART TIME:{:0>4}\nEMAIL:{}\n'.format(
             summary['callsign'],
             category,
             om_yl,
@@ -1353,6 +1663,25 @@ def print_title_block(summary):
             summary['email'],
         )
         )
+
+
+def print_title_block_31flavors(summary):
+    try:
+        power = categories[int(summary['Power Level'])]
+    except:
+        power = 'unknown'
+    try:
+        podxs_number = summary['070 number']
+    except:
+        podxs_number = 'unknown'
+    print('\nCALL:{}\nPOWER:{}\nSTART TIME:{:0>4}\nEMAIL:{}\n070 Number:{}\n'.format(
+        summary['Callsign'],
+        power,
+        summary['Block start time'],
+        summary['Email'],
+        podxs_number,
+    )
+    )
 
 
 if __name__ == '__main__':
