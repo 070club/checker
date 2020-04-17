@@ -854,12 +854,16 @@ def get_state(record):
                 return {'length': len(element), 'data': element.upper()}
             if element.upper() in dxcc_1_states.keys():
                 return {'length': len(element), 'data': element.upper()}
+            if element.upper() in ['AK', 'HI']:
+                return {'length': len(element), 'data': element.upper()}
     if 'rst_rcvd' in record:
         rst_data = re.split('[\W\s]{1}', record['rst_rcvd']['data'])
         for element in rst_data:
             if element.upper() in dxcc_291_states.keys():
                 return {'length': len(element), 'data': element.upper()}
             if element.upper() in dxcc_1_states.keys():
+                return {'length': len(element), 'data': element.upper()}
+            if element.upper() in ['AK', 'HI']:
                 return {'length': len(element), 'data': element.upper()}
     if 'srx' in record:
         srx_data = re.split('[\W\s]{1}', record['srx']['data'])
@@ -868,12 +872,25 @@ def get_state(record):
                 return {'length': len(element), 'data': element.upper()}
             if element.upper() in dxcc_1_states.keys():
                 return {'length': len(element), 'data': element.upper()}
+            if element.upper() in ['AK', 'HI']:
+                return {'length': len(element), 'data': element.upper()}
+    if 'comment' in record:
+        comment_data = re.split('[\W\s]{1}', record['comment']['data'])
+        for element in comment_data:
+            if element.upper() in dxcc_291_states.keys():
+                return {'length': len(element), 'data': element.upper()}
+            if element.upper() in dxcc_1_states.keys():
+                return {'length': len(element), 'data': element.upper()}
+            if element.upper() in ['AK', 'HI']:
+                return {'length': len(element), 'data': element.upper()}
     if 'qth' in record:
         qth_data = record['qth']['data'].upper()
         if len(qth_data) == 2:
             if qth_data in dxcc_291_states.keys():
                 return {'length': len(qth_data), 'data': qth_data}
             if qth_data in dxcc_1_states.keys():
+                return {'length': len(qth_data), 'data': qth_data}
+            if element.upper() in ['AK', 'HI']:
                 return {'length': len(qth_data), 'data': qth_data}
         elif len(qth_data) > 2:
             elements = re.split('[,\s]{1}', qth_data)
@@ -882,6 +899,8 @@ def get_state(record):
                     return {'length': len(element), 'data': element}
                 if element in dxcc_1_states.keys():
                     return {'length': len(element), 'data': element}
+                if element.upper() in ['AK', 'HI']:
+                    return {'length': len(element), 'data': element.upper()}
     if 'section' in record:  # Scraping the bottom of the barrel (section is not the same as State)
         if record['section']['data'] in arrl_section_to_state:
             section_state = arrl_section_to_state[record['section']['data']]['state']
