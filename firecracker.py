@@ -1,8 +1,8 @@
 #!/usr/local/bin/python3
 #
-# thirtyone.py
+# firecracker.py
 #
-# module for calculating 31 Flavors results
+# module for calculating the Firecracker Sprint results
 
 import sys
 
@@ -33,7 +33,7 @@ if __name__ == '__main__':
     summary = contests.summary_parser(args.summary, args.delim)
     adif_files = {}
     if args.adif_from_summary:
-        adif = summary[args.call.upper()]['ADIF File']
+        adif = summary[args.call.upper()]['adifFile']
         try:
             rootname, ext = os.path.splitext(adif)
         except FileNotFoundError:
@@ -59,7 +59,7 @@ if __name__ == '__main__':
     invalid_entries = None
     scores = None
     if args.year == '2020':
-        valid_entries, invalid_entries, scores = contests.thirtyone_flavors_2020(adif_files, summary[args.call.upper()])
+        valid_entries, invalid_entries, scores = contests.firecracker_2020(adif_files, summary[args.call.upper()])
     else:
         print("No year given: Exiting", file=sys.stderr)
         exit(1)
@@ -71,12 +71,12 @@ if __name__ == '__main__':
         pprint.pprint(invalid_entries)
 
     if args.score_only:
-        contests.print_score_31flavors(scores, summary[args.call.upper()])
+        contests.print_score(scores, summary[args.call.upper()])
     else:
         contests.print_title_block_startblock(summary[args.call.upper()])
-        contests.print_score_31flavors(scores, None)
+        contests.print_score(scores, None)
         if valid_entries:
-            contests.print_entries_31flavors(valid_entries, valid=True)
+            contests.print_entries(valid_entries, valid=True)
         if not args.valid_only:
             if invalid_entries:
-                contests.print_entries_31flavors(invalid_entries, valid=False)
+                contests.print_entries(invalid_entries, valid=False)

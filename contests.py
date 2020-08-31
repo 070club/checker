@@ -585,6 +585,7 @@ arrl_section_to_state = {
 }
 # End of enumerations
 
+# TODO: standardize entries.csv headers
 def summary_parser(inputfile, delim):
     import csv
     summary = {}
@@ -592,7 +593,7 @@ def summary_parser(inputfile, delim):
     with open(inputfile, newline='') as csvfile:
         reader = csv.DictReader(csvfile, delimiter=delim)
         for row in reader:
-            summary[row['Callsign']] = row
+            summary[row['callsign']] = row
     return summary
 
 
@@ -770,6 +771,31 @@ def tdw_2020(adif_files, summary):
                 valid_records.append(s_record)
     scores = calc_scores_tdw(valid_records, conditions['bonus_stations'])
     return valid_records, invalid_records, scores
+
+
+def firecracker_2020(adif_files, summary):
+    conditions = {'contest_start': datetime.datetime(2020, 7, 4, 20, 00, 00, 0),
+                  'contest_end': datetime.datetime(2020, 7, 5, 19, 59, 59, 0),
+                  'valid_modes': ['psk', 'bpsk',
+                                  'psk31', 'bpsk31', 'qpsk31',
+                                  ],
+                  'valid_bands': ['40m'],
+                  }
+    valid_records = []
+    invalid_records = []
+    # loop through adif files
+    # for each adif file, grab summary info
+    for entry in adif_files:
+        for record in adif_files[entry]:
+            s_record = synthesize_fields(record)
+            status, errors = test_record(s_record, conditions, summary, valid_records)
+            if errors:
+                invalid_records.append({'data': s_record, 'errors': errors})
+            else:
+                valid_records.append(s_record)
+    scores = calc_scores(valid_records)
+    return valid_records, invalid_records, scores
+
 
 
 def synthesize_fields(record):
@@ -1227,20 +1253,27 @@ def rec_in_window(entry, conditions, summary):
 
     if conditions['contest_start'] <= qso_dt <= conditions['contest_end']:
         try:
-            block_start = int(summary['Block start time'])
+            block_start = int(summary['blockStartTime'])
         except KeyError:
             return True
         else:
-            if summary['Contest Name'] == '31flavors':
+            if summary['contestName'] == '31flavors':
                 if 1000 <= block_start <= 2359:
                     block_start_string = conditions['contest_start'].strftime('%Y%m%d') + '{:0>4}'.format(
-                        summary['Block start time'])
+                        summary['blockStartTime'])
                 else:
                     day2 = conditions['contest_start'] + datetime.timedelta(days=1)
-                    block_start_string = day2.strftime('%Y%m%d') + '{:0>4}'.format(summary['Block start time'])
+                    block_start_string = day2.strftime('%Y%m%d') + '{:0>4}'.format(summary['blockStartTime'])
+            elif summary['contestName'] == 'firecracker':
+                if 2000 <= block_start <= 2359:
+                    block_start_string = conditions['contest_start'].strftime('%Y%m%d') + '{:0>4}'.format(
+                        summary['blockStartTime'])
+                else:
+                    day2 = conditions['contest_start'] + datetime.timedelta(days=1)
+                    block_start_string = day2.strftime('%Y%m%d') + '{:0>4}'.format(summary['blockStartTime'])
             else:
                 block_start_string = conditions['contest_start'].strftime('%Y%m%d') + '{:0>4}'.format(
-                    summary['Block start time'])
+                    summary['blockStartTime'])
             block_start_dt = datetime.datetime.strptime(block_start_string, '%Y%m%d%H%M')
             block_end_dt = block_start_dt + datetime.timedelta(hours=6)
             if block_end_dt > conditions['contest_end']:
@@ -1603,11 +1636,11 @@ def print_score(scores, summary):
     except:
         callsign = None
     try:
-        category = categories[int(summary['category'])]
+        powerlevel = categories[int(summary['powerlevel'])]
     except:
-        category = 'unknown'
+        powerlevel = 'unknown'
     try:
-        podxs_number = summary['070-number']
+        podxs_number = summary['070number']
     except:
         podxs_number = 'unknown'
     try:
@@ -1630,10 +1663,10 @@ def print_score(scores, summary):
     if summary is not None:  # Report only, spit out CSV of call+score
         if om_yl is not None:
             yl_count = scores['mults']['yl']
-            print('callsign,category,OM/YL,070-number,email,q-points,yl-count,dxcc-mult,state-mult,total')
+            print('callsign,powerlevel,OM/YL,070-number,email,q-points,yl-count,dxcc-mult,state-mult,total')
             print('{},{},{},{},{},{},{},{},{},{}'.format(
                 callsign,
-                category,
+                powerlevel,
                 om_yl,
                 podxs_number,
                 email,
@@ -1645,10 +1678,10 @@ def print_score(scores, summary):
             )
             )
         elif egb_bonus is not None:
-            print('callsign,category,070-number,email,q-points,dxcc-mult,state-mult,EGB-bonus,total')
+            print('callsign,powerlevel,070-number,email,q-points,dxcc-mult,state-mult,EGB-bonus,total')
             print('{},{},{},{},{},{},{},{},{}'.format(
                 callsign,
-                category,
+                powerlevel,
                 podxs_number,
                 email,
                 q_points,
@@ -1659,10 +1692,10 @@ def print_score(scores, summary):
             )
             )
         else:
-            print('callsign,category,070-number,email,q-points,dxcc-mult,state-mult,total')
+            print('callsign,powerlevel,070-number,email,q-points,dxcc-mult,state-mult,total')
             print('{},{},{},{},{},{},{},{}'.format(
                 callsign,
-                category,
+                powerlevel,
                 podxs_number,
                 email,
                 q_points,
@@ -1720,19 +1753,19 @@ def print_score(scores, summary):
 
 def print_score_31flavors(scores, summary):
     try:
-        callsign = summary['Callsign']
+        callsign = summary['callsign']
     except:
         callsign = None
     try:
-        category = categories[int(summary['Power Level'])]
+        category = categories[int(summary['powerlevel'])]
     except:
         category = 'unknown'
     try:
-        podxs_number = summary['070 number']
+        podxs_number = summary['070number']
     except:
         podxs_number = 'unknown'
     try:
-        email = summary['Email']
+        email = summary['email']
     except:
         email = None
     q_points = scores['q-points']
@@ -1786,19 +1819,19 @@ def print_score_31flavors(scores, summary):
 
 def print_score_tdw(scores, summary):
     try:
-        callsign = summary['Callsign']
+        callsign = summary['callsign']
     except:
         callsign = None
     try:
-        category = categories[int(summary['Power Level'])]
+        category = categories[int(summary['powerlevel'])]
     except:
         category = 'unknown'
     try:
-        podxs_number = summary['070 number']
+        podxs_number = summary['070number']
     except:
         podxs_number = 'unknown'
     try:
-        email = summary['Email']
+        email = summary['email']
     except:
         email = None
     q_points = scores['q-points']
@@ -1852,11 +1885,11 @@ def print_header_tdw(valid=True):
 
 def print_title_block(summary):
     try:
-        category = categories[int(summary['category'])]
+        powerlevel = categories[int(summary['powerlevel'])]
     except:
-        category = 'unknown'
+        powerlevel = 'unknown'
     try:
-        podxs_number = summary['070-number']
+        podxs_number = summary['070number']
     except:
         podxs_number = 'unknown'
     try:
@@ -1867,35 +1900,36 @@ def print_title_block(summary):
     if om_yl is None:
         print('\nCALL:{}\nPOWER:{}\nEMAIL:{}\n'.format(
             summary['callsign'],
-            category,
+            powerlevel,
             summary['email'],
         )
         )
     else:
         print('\nCALL:{}\nPOWER:{}\nCATEGORY:{}\nSTART TIME:{:0>4}\nEMAIL:{}\n'.format(
             summary['callsign'],
-            category,
+            powerlevel,
             om_yl,
-            summary['Block start time'],
+            summary['blockStartTime'],
             summary['email'],
         )
         )
 
 
-def print_title_block_31flavors(summary):
+def print_title_block_startblock(summary):
+    """ Title block for contests with a block start time"""
     try:
-        power = categories[int(summary['Power Level'])]
+        power = categories[int(summary['powerlevel'])]
     except:
         power = 'unknown'
     try:
-        podxs_number = summary['070 number']
+        podxs_number = summary['070number']
     except:
         podxs_number = 'unknown'
     print('\nCALL:{}\nPOWER:{}\nSTART TIME:{:0>4}\nEMAIL:{}\n070 Number:{}\n'.format(
-        summary['Callsign'],
+        summary['callsign'],
         power,
-        summary['Block start time'],
-        summary['Email'],
+        summary['blockStartTime'],
+        summary['email'],
         podxs_number,
     )
     )
@@ -1903,17 +1937,17 @@ def print_title_block_31flavors(summary):
 
 def print_title_block_tdw(summary):
     try:
-        power = categories[int(summary['Power Level'])]
+        power = categories[int(summary['powerlevel'])]
     except:
         power = 'unknown'
     try:
-        podxs_number = summary['070 number']
+        podxs_number = summary['070number']
     except:
         podxs_number = 'unknown'
     print('\nCALL:{}\nPOWER:{}\nEMAIL:{}\n070 Number:{}\n'.format(
-        summary['Callsign'],
+        summary['callsign'],
         power,
-        summary['Email'],
+        summary['email'],
         podxs_number,
     )
     )
