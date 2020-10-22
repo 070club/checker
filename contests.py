@@ -821,6 +821,30 @@ def jayhudak_2020(adif_files, summary):
     return valid_records, invalid_records, scores
 
 
+def greatpumpkin_2020(adif_files, summary):
+    conditions = {'contest_start': datetime.datetime(2020, 10, 10, 20, 00, 00, 0),
+                  'contest_end': datetime.datetime(2020, 10, 11, 19, 59, 59, 0),
+                  'valid_modes': ['psk', 'bpsk',
+                                  'psk31', 'bpsk31', 'qpsk31',
+                                  ],
+                  'valid_bands': ['160m'],
+                  }
+    valid_records = []
+    invalid_records = []
+    # loop through adif files
+    # for each adif file, grab summary info
+    for entry in adif_files:
+        for record in adif_files[entry]:
+            s_record = synthesize_fields(record)
+            status, errors = test_record(s_record, conditions, summary, valid_records)
+            if errors:
+                invalid_records.append({'data': s_record, 'errors': errors})
+            else:
+                valid_records.append(s_record)
+    scores = calc_scores(valid_records)
+    return valid_records, invalid_records, scores
+
+
 def synthesize_fields(record):
     """Method to build synthetic fields for the values we care about if they are
         empty or broken or something else (e.g., build band from freq)"""
@@ -1287,7 +1311,7 @@ def rec_in_window(entry, conditions, summary):
                 else:
                     day2 = conditions['contest_start'] + datetime.timedelta(days=1)
                     block_start_string = day2.strftime('%Y%m%d') + '{:0>4}'.format(summary['blockStartTime'])
-            elif summary['contestName'] in ['firecracker', 'jayhudak']:
+            elif summary['contestName'] in ['firecracker', 'jayhudak', 'greatpumpkin']:
                 if 2000 <= block_start <= 2359:
                     block_start_string = conditions['contest_start'].strftime('%Y%m%d') + '{:0>4}'.format(
                         summary['blockStartTime'])
