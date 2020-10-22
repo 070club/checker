@@ -82,7 +82,9 @@ def parse_record(linebuf):
             del(fields['errors'])
 #        if fields['mode']['data'].lower() in ['psk','bpsk','psk31','bpsk31','qpsk31']: # We want only PSK31 QSOs
 #            record_elements.append(fields)
-        record_elements.append(fields)
+        # There's no point appending if the record is empty (ie, the ADIF is empty)
+        if len(fields) > 0:
+            record_elements.append(fields)
     return record_elements,leftover
 
 
