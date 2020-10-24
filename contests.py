@@ -848,6 +848,15 @@ def greatpumpkin_2020(adif_files, summary):
 def synthesize_fields(record):
     """Method to build synthetic fields for the values we care about if they are
         empty or broken or something else (e.g., build band from freq)"""
+
+    # remove fields that have no data
+    keys = []
+    for key in record.keys(): # This loop is because the dict_key is tied to the dict so we can't delete the field
+        keys.append(key)
+    for key in keys:
+        if record[key]['length'] == 0:
+            del(record[key])
+
     s_record = record
 
     if 'band' not in record:
