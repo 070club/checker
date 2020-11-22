@@ -597,31 +597,53 @@ def summary_parser(inputfile, delim):
     return summary
 
 
-def triple_play_2019(adif, summary):
-    results = {}  # going to stuff scorer results for all the entries here
-    valid_modes = ['psk', 'bpsk', 'psk31', 'bpsk31', 'qpsk31']
-    valid_dates = [20191109, 20191110, 20191111]
-    conditions = {valid_dates, valid_modes}
+def triple_play_2020(adif_files, summary):
+    conditions = {'contest_start': datetime.datetime(2020, 11, 12, 00, 00, 00, 0),
+                  'contest_end': datetime.datetime(2020, 10, 14, 23, 59, 59, 0),
+                  'valid_modes': ['psk', 'bpsk', 'psk31', 'bpsk31', 'qpsk31'],
+                  'valid_bands': ['40m', '80m', '160m'],
+                  }
+    conditions['saturday_0000'] = conditions['contest_start']
+    conditions['sunday_0000'] = conditions['saturday_0000'] + datetime.timedelta(days=1)
+    conditions['monday_0000'] = conditions['sunday_0000'] + datetime.timedelta(days=1)
+    if summary['saturdayStartTime'] is not 'None':
+        saturday_start_hours = int(summary['saturdayStartTime']) // 100
+        saturday_start_minutes = int(summary['saturdayStartTime']) - (saturday_start_hours * 100)
+        conditions['saturday_block_start_dt'] = conditions['saturday_0000'] + datetime.timedelta(hours=saturday_start_hours)
+        conditions['saturday_block_start_dt'] = conditions['saturday_block_start_dt'] + datetime.timedelta(minutes=saturday_start_minutes)
+        conditions['saturday_block_end_dt'] = conditions['saturday_block_start_dt'] + datetime.timedelta(hours=6)
+        if conditions['saturday_block_end_dt'] >= conditions['sunday_0000']:
+            conditions['saturday_block_end_dt'] = conditions['sunday_0000'] - datetime.timedelta(seconds=1)
+    if summary['sundayStartTime'] is not 'None':
+        sunday_start_hours = int(summary['sundayStartTime']) // 100
+        sunday_start_minutes = int(summary['sundayStartTime']) - (sunday_start_hours * 100)
+        conditions['sunday_block_start_dt'] = conditions['sunday_0000'] + datetime.timedelta(hours=sunday_start_hours)
+        conditions['sunday_block_start_dt'] = conditions['sunday_block_start_dt'] + datetime.timedelta(minutes=sunday_start_minutes)
+        conditions['sunday_block_end_dt'] = conditions['sunday_block_start_dt'] + datetime.timedelta(hours=6)
+        if conditions['sunday_block_end_dt'] >= conditions['sunday_0000']:
+            conditions['sunday_block_end_dt'] = conditions['sunday_0000'] - datetime.timedelta(seconds=1)
+    if summary['mondayStartTime'] is not 'None':
+        monday_start_hours = int(summary['mondayStartTime']) // 100
+        monday_start_minutes = int(summary['mondayStartTime']) - (monday_start_hours * 100)
+        conditions['monday_block_start_dt'] = conditions['monday_0000'] + datetime.timedelta(hours=monday_start_hours)
+        conditions['monday_block_start_dt'] = conditions['monday_block_start_dt'] + datetime.timedelta(minutes=monday_start_minutes)
+        conditions['monday_block_end_dt'] = conditions['monday_block_start_dt'] + datetime.timedelta(hours=6)
+        if conditions['monday_block_end_dt'] >= conditions['sunday_0000']:
+            conditions['monday_block_end_dt'] = conditions['sunday_0000'] - datetime.timedelta(seconds=1)
+    valid_records = []
+    invalid_records = []
     # loop through adif files
     # for each adif file, grab summary info
-    for entry in adif:
-        valid_entries, invalid_entries = test_record(entry, valid_dates, summary)
-        print(entry, len(adif[entry]))
-        print(summary[entry])
-
-
-def doubleheader_2019(adif, summary):
-    results = {}  # going to stuff scorer results for all the entries here
-    valid_modes = ['psk', 'bpsk', 'psk31', 'bpsk31', 'qpsk31']
-    valid_dates = [20191214, 20191215, 20191216]
-    conditions = {valid_dates, valid_modes}
-    # loop through adif files
-    # for each adif file, grab summary info
-    for entry in adif:
-        if test_record(entry, valid_dates, summary):
-            pass
-        print(entry, len(adif[entry]))
-        print(summary[entry])
+    for entry in adif_files:
+        for record in adif_files[entry]:
+            s_record = synthesize_fields(record)
+            status, errors = test_record(s_record, conditions, summary, valid_records)
+            if errors:
+                invalid_records.append({'data': s_record, 'errors': errors})
+            else:
+                valid_records.append(s_record)
+    scores = calc_scores(valid_records)
+    return valid_records, invalid_records, scores
 
 
 def pskfest_2019(adif_files, summary):
@@ -1010,7 +1032,7 @@ def get_state(record):
                 return {'length': len(qth_data), 'data': qth_data}
             if qth_data in dxcc_1_states.keys():
                 return {'length': len(qth_data), 'data': qth_data}
-            if element.upper() in ['AK', 'HI']:
+            if qth_data.upper() in ['AK', 'HI']:
                 return {'length': len(qth_data), 'data': qth_data}
         elif len(qth_data) > 2:
             elements = re.split('[,\s]{1}', qth_data)
@@ -1172,16 +1194,16 @@ def calc_egb(valid_records):
             testchar = suffix[1][0].upper()
         except:
             print(rec)
-
-        if testchar in egb['erin']['letters']:
-            egb['erin']['letters'].remove(testchar)
-            egb['erin']['callsigns'].append(rec['call'])
-        elif testchar in egb['go']['letters']:
-            egb['go']['letters'].remove(testchar)
-            egb['go']['callsigns'].append(rec['call'])
-        elif testchar in egb['bragh']['letters']:
-            egb['bragh']['letters'].remove(testchar)
-            egb['bragh']['callsigns'].append(rec['call'])
+        else:
+            if testchar in egb['erin']['letters']:
+                egb['erin']['letters'].remove(testchar)
+                egb['erin']['callsigns'].append(rec['call'])
+            elif testchar in egb['go']['letters']:
+                egb['go']['letters'].remove(testchar)
+                egb['go']['callsigns'].append(rec['call'])
+            elif testchar in egb['bragh']['letters']:
+                egb['bragh']['letters'].remove(testchar)
+                egb['bragh']['callsigns'].append(rec['call'])
 
     if len(egb['erin']['letters']) == 0: egb['bonus'] += 100
     if len(egb['go']['letters']) == 0: egb['bonus'] += 100
@@ -1308,37 +1330,50 @@ def rec_in_window(entry, conditions, summary):
         qso_dt = datetime.datetime.strptime(qso_start_string, '%Y%m%d%H%M')
 
     if conditions['contest_start'] <= qso_dt <= conditions['contest_end']:
-        try:
-            block_start = int(summary['blockStartTime'])
-        except KeyError:
-            return True
+        if summary['contestName'] in ['tripleplay', 'doubleheader']:
+            if summary['saturdayStartTime'] is not 'None':
+                if conditions['saturday_block_start_dt'] <= qso_dt <= conditions['saturday_block_end_dt']:
+                    return True
+            if summary['sundayStartTime'] is not 'None':
+                if conditions['sunday_block_start_dt'] <= qso_dt <= conditions['sunday_block_end_dt']:
+                    return True
+            if summary['mondayStartTime'] is not 'None':
+                if conditions['monday_block_start_dt'] <= qso_dt <= conditions['monday_block_end_dt']:
+                    return True
+            return False
         else:
-            if summary['contestName'] == '31flavors':
-                if 1000 <= block_start <= 2359:
-                    block_start_string = conditions['contest_start'].strftime('%Y%m%d') + '{:0>4}'.format(
-                        summary['blockStartTime'])
-                else:
-                    day2 = conditions['contest_start'] + datetime.timedelta(days=1)
-                    block_start_string = day2.strftime('%Y%m%d') + '{:0>4}'.format(summary['blockStartTime'])
-            elif summary['contestName'] in ['firecracker', 'jayhudak', 'greatpumpkin']:
-                if 2000 <= block_start <= 2359:
-                    block_start_string = conditions['contest_start'].strftime('%Y%m%d') + '{:0>4}'.format(
-                        summary['blockStartTime'])
-                else:
-                    day2 = conditions['contest_start'] + datetime.timedelta(days=1)
-                    block_start_string = day2.strftime('%Y%m%d') + '{:0>4}'.format(summary['blockStartTime'])
-            else:
-                block_start_string = conditions['contest_start'].strftime('%Y%m%d') + '{:0>4}'.format(
-                    summary['blockStartTime'])
-            block_start_dt = datetime.datetime.strptime(block_start_string, '%Y%m%d%H%M')
-            block_end_dt = block_start_dt + datetime.timedelta(hours=6)
-            if block_end_dt > conditions['contest_end']:
-                block_end_dt = conditions['contest_end']
-
-            if block_start_dt <= qso_dt < block_end_dt:
+            try:
+                block_start = int(summary['blockStartTime'])
+            except KeyError:
+                #TODO: Does it make sense to return True if we can't find a start time?
                 return True
             else:
-                return False
+                if summary['contestName'] == '31flavors':
+                    if 1000 <= block_start <= 2359:
+                        block_start_string = conditions['contest_start'].strftime('%Y%m%d') + '{:0>4}'.format(
+                            summary['blockStartTime'])
+                    else:
+                        day2 = conditions['contest_start'] + datetime.timedelta(days=1)
+                        block_start_string = day2.strftime('%Y%m%d') + '{:0>4}'.format(summary['blockStartTime'])
+                elif summary['contestName'] in ['firecracker', 'jayhudak', 'greatpumpkin']:
+                    if 2000 <= block_start <= 2359:
+                        block_start_string = conditions['contest_start'].strftime('%Y%m%d') + '{:0>4}'.format(
+                            summary['blockStartTime'])
+                    else:
+                        day2 = conditions['contest_start'] + datetime.timedelta(days=1)
+                        block_start_string = day2.strftime('%Y%m%d') + '{:0>4}'.format(summary['blockStartTime'])
+                else:
+                    block_start_string = conditions['contest_start'].strftime('%Y%m%d') + '{:0>4}'.format(
+                        summary['blockStartTime'])
+                block_start_dt = datetime.datetime.strptime(block_start_string, '%Y%m%d%H%M')
+                block_end_dt = block_start_dt + datetime.timedelta(hours=6)
+                if block_end_dt > conditions['contest_end']:
+                    block_end_dt = conditions['contest_end']
+
+                if block_start_dt <= qso_dt < block_end_dt:
+                    return True
+                else:
+                    return False
     else:
         return False
 
@@ -2010,9 +2045,9 @@ def print_title_block_tdw(summary):
 
 
 if __name__ == '__main__':
-    import adifparser
     import argparse
-    import pprint
+    #import adifparser
+    #import pprint
 
     parser = argparse.ArgumentParser(description='Contests Checker')
     parser.add_argument('--contest', metavar='CONTEST')
@@ -2020,14 +2055,3 @@ if __name__ == '__main__':
     parser.add_argument('--adif', metavar='ADIF', nargs='*')
     args = parser.parse_args()
 
-    summary = summary_parser(args.summary)
-    adif_records = {}
-    for adif in args.adif:
-        name, ext = adif.split('.')
-        adif_records[name] = adifparser.parse(adif)
-    pprint.pprint(adif_records)
-    # pprint.pprint(summary)
-    if args.contest == 'tp2019':
-        triple_play_2019(adif_records, summary)
-    if args.contest == 'dh2019':
-        doubleheader_2019(adif_records, summary)
