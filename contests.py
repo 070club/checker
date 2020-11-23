@@ -585,8 +585,9 @@ arrl_section_to_state = {
 }
 # End of enumerations
 
-# TODO: standardize entries.csv headers
+
 def summary_parser(inputfile, delim):
+    # TODO: standardize entries.csv headers
     import csv
     summary = {}
     # with open(inputfile, newline='', encoding='utf-16') as csvfile:
@@ -597,12 +598,7 @@ def summary_parser(inputfile, delim):
     return summary
 
 
-def triple_play_2020(adif_files, summary):
-    conditions = {'contest_start': datetime.datetime(2020, 11, 12, 00, 00, 00, 0),
-                  'contest_end': datetime.datetime(2020, 10, 14, 23, 59, 59, 0),
-                  'valid_modes': ['psk', 'bpsk', 'psk31', 'bpsk31', 'qpsk31'],
-                  'valid_bands': ['40m', '80m', '160m'],
-                  }
+def tp_dh_build_date_blocks(summary, conditions):
     conditions['saturday_0000'] = conditions['contest_start']
     conditions['sunday_0000'] = conditions['saturday_0000'] + datetime.timedelta(days=1)
     conditions['monday_0000'] = conditions['sunday_0000'] + datetime.timedelta(days=1)
@@ -611,7 +607,7 @@ def triple_play_2020(adif_files, summary):
         saturday_start_minutes = int(summary['saturdayStartTime']) - (saturday_start_hours * 100)
         conditions['saturday_block_start_dt'] = conditions['saturday_0000'] + datetime.timedelta(hours=saturday_start_hours)
         conditions['saturday_block_start_dt'] = conditions['saturday_block_start_dt'] + datetime.timedelta(minutes=saturday_start_minutes)
-        conditions['saturday_block_end_dt'] = conditions['saturday_block_start_dt'] + datetime.timedelta(hours=6)
+        conditions['saturday_block_end_dt'] = conditions['saturday_block_start_dt'] + datetime.timedelta(hours=5,minutes=59,seconds=59)
         if conditions['saturday_block_end_dt'] >= conditions['sunday_0000']:
             conditions['saturday_block_end_dt'] = conditions['sunday_0000'] - datetime.timedelta(seconds=1)
     if summary['sundayStartTime'] is not 'None':
@@ -619,17 +615,27 @@ def triple_play_2020(adif_files, summary):
         sunday_start_minutes = int(summary['sundayStartTime']) - (sunday_start_hours * 100)
         conditions['sunday_block_start_dt'] = conditions['sunday_0000'] + datetime.timedelta(hours=sunday_start_hours)
         conditions['sunday_block_start_dt'] = conditions['sunday_block_start_dt'] + datetime.timedelta(minutes=sunday_start_minutes)
-        conditions['sunday_block_end_dt'] = conditions['sunday_block_start_dt'] + datetime.timedelta(hours=6)
-        if conditions['sunday_block_end_dt'] >= conditions['sunday_0000']:
-            conditions['sunday_block_end_dt'] = conditions['sunday_0000'] - datetime.timedelta(seconds=1)
+        conditions['sunday_block_end_dt'] = conditions['sunday_block_start_dt'] + datetime.timedelta(hours=5,minutes=59,seconds=59)
+        if conditions['sunday_block_end_dt'] >= conditions['monday_0000']:
+            conditions['sunday_block_end_dt'] = conditions['monday_0000'] - datetime.timedelta(seconds=1)
     if summary['mondayStartTime'] is not 'None':
         monday_start_hours = int(summary['mondayStartTime']) // 100
         monday_start_minutes = int(summary['mondayStartTime']) - (monday_start_hours * 100)
         conditions['monday_block_start_dt'] = conditions['monday_0000'] + datetime.timedelta(hours=monday_start_hours)
         conditions['monday_block_start_dt'] = conditions['monday_block_start_dt'] + datetime.timedelta(minutes=monday_start_minutes)
-        conditions['monday_block_end_dt'] = conditions['monday_block_start_dt'] + datetime.timedelta(hours=6)
-        if conditions['monday_block_end_dt'] >= conditions['sunday_0000']:
-            conditions['monday_block_end_dt'] = conditions['sunday_0000'] - datetime.timedelta(seconds=1)
+        conditions['monday_block_end_dt'] = conditions['monday_block_start_dt'] + datetime.timedelta(hours=5,minutes=59,seconds=59)
+        if conditions['monday_block_end_dt'] >= conditions['contest_end']:
+            conditions['monday_block_end_dt'] = conditions['contest_end']
+    return conditions
+
+
+def triple_play_2020(adif_files, summary):
+    conditions = {'contest_start': datetime.datetime(2020, 11, 14, 00, 00, 00, 0),
+                  'contest_end': datetime.datetime(2020, 11, 16, 23, 59, 59, 0),
+                  'valid_modes': ['psk', 'bpsk', 'psk31', 'bpsk31', 'qpsk31'],
+                  'valid_bands': ['40m', '80m', '160m'],
+                  }
+    conditions = tp_dh_build_date_blocks(summary, conditions)
     valid_records = []
     invalid_records = []
     # loop through adif files
@@ -642,7 +648,7 @@ def triple_play_2020(adif_files, summary):
                 invalid_records.append({'data': s_record, 'errors': errors})
             else:
                 valid_records.append(s_record)
-    scores = calc_scores(valid_records)
+    scores = calc_scores_tp_dh(valid_records)
     return valid_records, invalid_records, scores
 
 
@@ -1263,6 +1269,55 @@ def calc_scores_tdw(valid_records, bonus_stations):
             scores['members'].append(rec['member_number'])
 
     scores['total'] = scores['q-points'] * len(scores['members']) + scores['bonus']
+    return scores
+
+
+def calc_scores_tp_dh(valid_records):
+    """
+        Calculate Scores for Triple Play and Doubleheader.
+        Rules:
+        BANDS: 40, 80 and 160 meters.  Work each station once per band.
+        SCORING: QSO Points - Each contact on 40 meters counts one (1) QSO point.
+                Each contact on 80 meters counts as two (2) QSO points.
+                Each contact on 160 meters counts as three (3) QSO points.
+                Dupes count as zero (0) points.
+        MULTIPLIERS: Each different State/Province/Country (SPC) worked, counted only once (not once per band).
+        First U.S. station worked counts as two (2) multipliers (country and state).
+        First VE station worked counts as two (2) multipliers (country and province).
+        First Alaska station worked counts as two (2) multipliers (country and state).
+        First Hawaii station worked counts as two (2) multipliers (country and state).
+    """
+
+    scores = {}
+    scores['q-points'] = {'40m': [], '80m': [], '160m': []}
+    scores['mults'] = {}
+    scores['mults']['dxcc'] = {}
+    scores['mults']['dxcc']['data'] = []
+    scores['mults']['dxcc']['errors'] = []
+    scores['mults']['state'] = []
+    scores['mults']['band'] = []
+    for rec in valid_records:
+        try:
+            if rec['dxcc']['data'] not in scores['mults']['dxcc']['data']:
+                scores['mults']['dxcc']['data'].append(rec['dxcc']['data'])
+        except:
+            scores['mults']['dxcc']['errors'].append(rec)
+        try:
+            # For now, assuming only US and Canada for states
+            if rec['state']['data'].upper() not in scores['mults']['state'] and \
+                    int(rec['dxcc']['data']) in [1, 6, 110, 291]:
+                scores['mults']['state'].append(rec['state']['data'].upper())
+        except:
+            pass
+        if rec['band']['data'] == '40m':
+            scores['q-points']['40m'].append(rec)
+        elif rec['band']['data'] == '80m':
+            scores['q-points']['80m'].append(rec)
+        elif rec['band']['data'] == '160m':
+            scores['q-points']['160m'].append(rec)
+
+    q_totals = len(scores['q-points']['40m']) + (2*len(scores['q-points']['80m'])) + (3*len(scores['q-points']['160m']))
+    scores['total'] = (len(scores['mults']['dxcc']['data']) + len(scores['mults']['state'])) * q_totals
     return scores
 
 
