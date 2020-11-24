@@ -71,10 +71,10 @@ if __name__ == '__main__':
         pprint.pprint(invalid_entries)
 
     if args.score_only:
-        contests.print_score(scores, summary[args.call.upper()])
+        contests.print_score_tp_dh(scores, summary[args.call.upper()])
     else:
-        contests.print_title_block_startblock(summary[args.call.upper()])
-        contests.print_score(scores, None)
+        contests.print_title_block_multiple_startblocks(summary[args.call.upper()])
+        contests.print_score_tp_dh(scores, None)
         if valid_entries:
             contests.print_entries(valid_entries, valid=True)
         if not args.valid_only:

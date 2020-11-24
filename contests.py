@@ -602,7 +602,7 @@ def tp_dh_build_date_blocks(summary, conditions):
     conditions['saturday_0000'] = conditions['contest_start']
     conditions['sunday_0000'] = conditions['saturday_0000'] + datetime.timedelta(days=1)
     conditions['monday_0000'] = conditions['sunday_0000'] + datetime.timedelta(days=1)
-    if summary['saturdayStartTime'] is not 'None':
+    if summary['saturdayStartTime'] != 'None':
         saturday_start_hours = int(summary['saturdayStartTime']) // 100
         saturday_start_minutes = int(summary['saturdayStartTime']) - (saturday_start_hours * 100)
         conditions['saturday_block_start_dt'] = conditions['saturday_0000'] + datetime.timedelta(hours=saturday_start_hours)
@@ -610,7 +610,7 @@ def tp_dh_build_date_blocks(summary, conditions):
         conditions['saturday_block_end_dt'] = conditions['saturday_block_start_dt'] + datetime.timedelta(hours=5,minutes=59,seconds=59)
         if conditions['saturday_block_end_dt'] >= conditions['sunday_0000']:
             conditions['saturday_block_end_dt'] = conditions['sunday_0000'] - datetime.timedelta(seconds=1)
-    if summary['sundayStartTime'] is not 'None':
+    if summary['sundayStartTime'] != 'None':
         sunday_start_hours = int(summary['sundayStartTime']) // 100
         sunday_start_minutes = int(summary['sundayStartTime']) - (sunday_start_hours * 100)
         conditions['sunday_block_start_dt'] = conditions['sunday_0000'] + datetime.timedelta(hours=sunday_start_hours)
@@ -618,7 +618,7 @@ def tp_dh_build_date_blocks(summary, conditions):
         conditions['sunday_block_end_dt'] = conditions['sunday_block_start_dt'] + datetime.timedelta(hours=5,minutes=59,seconds=59)
         if conditions['sunday_block_end_dt'] >= conditions['monday_0000']:
             conditions['sunday_block_end_dt'] = conditions['monday_0000'] - datetime.timedelta(seconds=1)
-    if summary['mondayStartTime'] is not 'None':
+    if summary['mondayStartTime'] != 'None':
         monday_start_hours = int(summary['mondayStartTime']) // 100
         monday_start_minutes = int(summary['mondayStartTime']) - (monday_start_hours * 100)
         conditions['monday_block_start_dt'] = conditions['monday_0000'] + datetime.timedelta(hours=monday_start_hours)
@@ -903,7 +903,7 @@ def synthesize_fields(record):
             s_record['time_on'] = record['time_off']
         else:
             s_record['time_on'] = {'length': 2, 'data': '??'}
-    if 'state' not in record:
+    if 'state' not in record or record['state']['length'] > 2:
         state = get_state(record)
         if state:
             s_record['state'] = state
@@ -966,6 +966,18 @@ def get_om_yl(record):
 def get_state(record):
     """ Walk a list of increasingly poor options to try and find a value for State"""
 
+    if 'state' in record: # This is here to capture invalid state data (eg, ON // ONTARIO)
+        state_data = re.split('[\W\s]{1}', record['state']['data'])
+        for element in state_data:
+            if element.upper() in dxcc_291_states.keys():
+                return {'length': len(element), 'data': element.upper()}
+            if element.upper() in dxcc_1_states.keys():
+                return {'length': len(element), 'data': element.upper()}
+            if element.upper() in ['AK', 'HI']:
+                return {'length': len(element), 'data': element.upper()}
+            if element.upper() in arrl_section_to_state:
+                return {'length': len(arrl_section_to_state[element.upper()]['state']),
+                        'data': arrl_section_to_state[element.upper()]['state']}
     if 've_prov' in record:
         return record['ve_prov']
     if 'app_n1mm_exchange1' in record:
@@ -977,6 +989,9 @@ def get_state(record):
                 return {'length': len(element), 'data': element.upper()}
             if element.upper() in ['AK', 'HI']:
                 return {'length': len(element), 'data': element.upper()}
+            if element.upper() in arrl_section_to_state:
+                return {'length': len(arrl_section_to_state[element.upper()]['state']),
+                        'data': arrl_section_to_state[element.upper()]['state']}
     if 'app_n1mm_misctext' in record:
         n1mm_data = re.split('[\W\s]{1}', record['app_n1mm_misctext']['data'])
         for element in n1mm_data:
@@ -986,6 +1001,9 @@ def get_state(record):
                 return {'length': len(element), 'data': element.upper()}
             if element.upper() in ['AK', 'HI']:
                 return {'length': len(element), 'data': element.upper()}
+            if element.upper() in arrl_section_to_state:
+                return {'length': len(arrl_section_to_state[element.upper()]['state']),
+                        'data': arrl_section_to_state[element.upper()]['state']}
     if 'srx_string' in record:
         srx_data = re.split('[\W\s]{1}', record['srx_string']['data'])
         for element in srx_data:
@@ -995,6 +1013,9 @@ def get_state(record):
                 return {'length': len(element), 'data': element.upper()}
             if element.upper() in ['AK', 'HI']:
                 return {'length': len(element), 'data': element.upper()}
+            if element.upper() in arrl_section_to_state:
+                return {'length': len(arrl_section_to_state[element.upper()]['state']),
+                        'data': arrl_section_to_state[element.upper()]['state']}
     if 'notes' in record:
         notes_data = re.split('[\W\s]{1}', record['notes']['data'])
         for element in notes_data:
@@ -1004,6 +1025,9 @@ def get_state(record):
                 return {'length': len(element), 'data': element.upper()}
             if element.upper() in ['AK', 'HI']:
                 return {'length': len(element), 'data': element.upper()}
+            if element.upper() in arrl_section_to_state:
+                return {'length': len(arrl_section_to_state[element.upper()]['state']),
+                        'data': arrl_section_to_state[element.upper()]['state']}
     if 'rst_rcvd' in record:
         rst_data = re.split('[\W\s]{1}', record['rst_rcvd']['data'])
         for element in rst_data:
@@ -1013,6 +1037,9 @@ def get_state(record):
                 return {'length': len(element), 'data': element.upper()}
             if element.upper() in ['AK', 'HI']:
                 return {'length': len(element), 'data': element.upper()}
+            if element.upper() in arrl_section_to_state:
+                return {'length': len(arrl_section_to_state[element.upper()]['state']),
+                        'data': arrl_section_to_state[element.upper()]['state']}
     if 'srx' in record:
         srx_data = re.split('[\W\s]{1}', record['srx']['data'])
         for element in srx_data:
@@ -1022,6 +1049,9 @@ def get_state(record):
                 return {'length': len(element), 'data': element.upper()}
             if element.upper() in ['AK', 'HI']:
                 return {'length': len(element), 'data': element.upper()}
+            if element.upper() in arrl_section_to_state:
+                return {'length': len(arrl_section_to_state[element.upper()]['state']),
+                        'data': arrl_section_to_state[element.upper()]['state']}
     if 'comment' in record:
         comment_data = re.split('[\W\s]{1}', record['comment']['data'])
         for element in comment_data:
@@ -1031,6 +1061,9 @@ def get_state(record):
                 return {'length': len(element), 'data': element.upper()}
             if element.upper() in ['AK', 'HI']:
                 return {'length': len(element), 'data': element.upper()}
+            if element.upper() in arrl_section_to_state:
+                return {'length': len(arrl_section_to_state[element.upper()]['state']),
+                        'data': arrl_section_to_state[element.upper()]['state']}
     if 'qth' in record:
         qth_data = record['qth']['data'].upper()
         if len(qth_data) == 2:
@@ -1040,6 +1073,9 @@ def get_state(record):
                 return {'length': len(qth_data), 'data': qth_data}
             if qth_data.upper() in ['AK', 'HI']:
                 return {'length': len(qth_data), 'data': qth_data}
+            if qth_data.upper() in arrl_section_to_state:
+                return {'length': len(arrl_section_to_state[qth_data.upper()]['state']),
+                        'data': arrl_section_to_state[qth_data.upper()]['state']}
         elif len(qth_data) > 2:
             elements = re.split('[,\s]{1}', qth_data)
             for element in elements:
@@ -1049,6 +1085,9 @@ def get_state(record):
                     return {'length': len(element), 'data': element}
                 if element.upper() in ['AK', 'HI']:
                     return {'length': len(element), 'data': element.upper()}
+                if element.upper() in arrl_section_to_state:
+                    return {'length': len(arrl_section_to_state[element.upper()]['state']),
+                            'data': arrl_section_to_state[element.upper()]['state']}
     if 'section' in record:  # Scraping the bottom of the barrel (section is not the same as State)
         if record['section']['data'] in arrl_section_to_state:
             section_state = arrl_section_to_state[record['section']['data']]['state']
@@ -1386,13 +1425,13 @@ def rec_in_window(entry, conditions, summary):
 
     if conditions['contest_start'] <= qso_dt <= conditions['contest_end']:
         if summary['contestName'] in ['tripleplay', 'doubleheader']:
-            if summary['saturdayStartTime'] is not 'None':
+            if summary['saturdayStartTime'] != 'None':
                 if conditions['saturday_block_start_dt'] <= qso_dt <= conditions['saturday_block_end_dt']:
                     return True
-            if summary['sundayStartTime'] is not 'None':
+            if summary['sundayStartTime'] != 'None':
                 if conditions['sunday_block_start_dt'] <= qso_dt <= conditions['sunday_block_end_dt']:
                     return True
-            if summary['mondayStartTime'] is not 'None':
+            if summary['mondayStartTime'] != 'None':
                 if conditions['monday_block_start_dt'] <= qso_dt <= conditions['monday_block_end_dt']:
                     return True
             return False
@@ -2008,6 +2047,55 @@ def print_score_tdw(scores, summary):
         )
 
 
+def print_score_tp_dh(scores, summary):
+    try:
+        callsign = summary['callsign']
+    except:
+        callsign = None
+    try:
+        category = categories[int(summary['powerlevel'])]
+    except:
+        category = 'unknown'
+    try:
+        podxs_number = summary['070number']
+    except:
+        podxs_number = 'unknown'
+    try:
+        email = summary['email']
+    except:
+        email = None
+    q_points_40 = len(scores['q-points']['40m'])
+    q_points_80 = len(scores['q-points']['80m'])
+    q_points_160 = len(scores['q-points']['160m'])
+    total = scores['total']
+
+    if summary is not None:  # Report only, spit out CSV of call+score
+        print('callsign,category,070-number,email,40mQ,80mQ,160mQ,dxcc-mult,state-mult,total')
+        print('{},{},{},{},{},{},{},{},{},{}'.format(
+            callsign,
+            category,
+            podxs_number,
+            email,
+            q_points_40,
+            q_points_80,
+            q_points_160,
+            len(scores['mults']['dxcc']['data']),
+            len(scores['mults']['state']),
+            total,
+        )
+        )
+    else:
+        print('40mQs:{} 80mQs:{} 160mQs:{} DXCC-Mult:{} STATE-Mult:{} Total:{}'.format(
+            q_points_40,
+            q_points_80,
+            q_points_160,
+            len(scores['mults']['dxcc']['data']),
+            len(scores['mults']['state']),
+            scores['total']
+        )
+        )
+
+
 def print_header(valid=True):
     if valid:
         print("\ncall,qso_date,time_on,band,srx_string,dxcc,state")
@@ -2075,6 +2163,28 @@ def print_title_block_startblock(summary):
         summary['callsign'],
         power,
         summary['blockStartTime'],
+        summary['email'],
+        podxs_number,
+    )
+    )
+
+
+def print_title_block_multiple_startblocks(summary):
+    """ Title block for contests with multiple block start times"""
+    try:
+        power = categories[int(summary['powerlevel'])]
+    except:
+        power = 'unknown'
+    try:
+        podxs_number = summary['070number']
+    except:
+        podxs_number = 'unknown'
+    print('\nCALL:{}\nPOWER:{}\nSATURDAY START:{:0>4}\nSUNDAY START:{:0>4}\nMONDAY START:{:0>4}\nEMAIL:{}\n070 Number:{}\n'.format(
+        summary['callsign'],
+        power,
+        summary['saturdayStartTime'],
+        summary['sundayStartTime'],
+        summary['mondayStartTime'],
         summary['email'],
         podxs_number,
     )

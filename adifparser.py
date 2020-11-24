@@ -97,6 +97,7 @@ def parse(inputfile):
     records = []
     linebuf = ''
 
+    #TODO: add field validation (eg, make sure state info is valid - "ON // ONTARIO" ?)
     with fileinput.input(inputfile,openhook=fileinput.hook_encoded("ISO-8859-1") ) as f:
         for line in f:
             if fileinput.isfirstline():
