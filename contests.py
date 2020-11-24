@@ -880,7 +880,8 @@ def synthesize_fields(record):
     # remove fields that have no data
     keys = []
     for key in record.keys(): # This loop is because the dict_key is tied to the dict so we can't delete the field
-        keys.append(key)
+        if key != 'errors':
+            keys.append(key)
     for key in keys:
         if record[key]['length'] == 0:
             del(record[key])
@@ -1348,15 +1349,19 @@ def calc_scores_tp_dh(valid_records):
                 scores['mults']['state'].append(rec['state']['data'].upper())
         except:
             pass
-        if rec['band']['data'] == '40m':
+        if rec['band']['data'].lower() == '40m':
             scores['q-points']['40m'].append(rec)
-        elif rec['band']['data'] == '80m':
+        elif rec['band']['data'].lower() == '80m':
             scores['q-points']['80m'].append(rec)
-        elif rec['band']['data'] == '160m':
+        elif rec['band']['data'].lower() == '160m':
             scores['q-points']['160m'].append(rec)
 
     q_totals = len(scores['q-points']['40m']) + (2*len(scores['q-points']['80m'])) + (3*len(scores['q-points']['160m']))
-    scores['total'] = (len(scores['mults']['dxcc']['data']) + len(scores['mults']['state'])) * q_totals
+    mult_totals = len(scores['mults']['dxcc']['data']) + len(scores['mults']['state'])
+    if mult_totals > 0:
+        scores['total'] = mult_totals * q_totals
+    else:
+        scores['total'] = q_totals
     return scores
 
 
@@ -2094,6 +2099,14 @@ def print_score_tp_dh(scores, summary):
             scores['total']
         )
         )
+        if scores['mults']['dxcc']['errors']:
+            for error in scores['mults']['dxcc']['errors']:
+                print('DXCC ERRORS: {},{},{}'.format(
+                    error['call']['data'],
+                    error['qso_date']['data'],
+                    error['time_on']['data'],
+                )
+                )
 
 
 def print_header(valid=True):
