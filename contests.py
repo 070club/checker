@@ -6,6 +6,7 @@
 
 # Things to add
 # TODO : handle missing MODE exception (W3SW example)
+# TODO: look for 070 numbers if none provided in summary for header outputs
 
 import re
 import sys
@@ -877,6 +878,9 @@ def synthesize_fields(record):
     """Method to build synthetic fields for the values we care about if they are
         empty or broken or something else (e.g., build band from freq)"""
 
+    #TODO: figure out a way to reconcile conflicting information. eg, mismatched DXCC and country,
+    #       both STATE and VE_PROV, etc
+
     # remove fields that have no data
     keys = []
     for key in record.keys(): # This loop is because the dict_key is tied to the dict so we can't delete the field
@@ -976,6 +980,12 @@ def get_state(record):
                 return {'length': len(element), 'data': element.upper()}
             if element.upper() in ['AK', 'HI']:
                 return {'length': len(element), 'data': element.upper()}
+            for key in dxcc_291_states.keys():
+                if element.upper() == dxcc_291_states[key]['name'].upper():
+                    return {'length': len(key), 'data': key.upper()}
+            for key in dxcc_1_states.keys():
+                if element.upper() == dxcc_1_states[key]['name'].upper():
+                    return {'length': len(key), 'data': key.upper()}
             if element.upper() in arrl_section_to_state:
                 return {'length': len(arrl_section_to_state[element.upper()]['state']),
                         'data': arrl_section_to_state[element.upper()]['state']}

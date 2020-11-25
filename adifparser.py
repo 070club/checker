@@ -5,6 +5,7 @@
 # Create dict of record info from adif input
 
 # TODO: return header information along with records
+# TODO: strip out trailing whitespace after records
 
 import re
 import sys
