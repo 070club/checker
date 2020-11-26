@@ -653,6 +653,29 @@ def triple_play_2020(adif_files, summary):
     return valid_records, invalid_records, scores
 
 
+def doubleheader_2020(adif_files, summary):
+    conditions = {'contest_start': datetime.datetime(2020, 12, 12, 00, 00, 00, 0),
+                  'contest_end': datetime.datetime(2020, 12, 14, 23, 59, 59, 0),
+                  'valid_modes': ['psk', 'bpsk', 'psk31', 'bpsk31', 'qpsk31'],
+                  'valid_bands': ['40m', '80m', '160m'],
+                  }
+    conditions = tp_dh_build_date_blocks(summary, conditions)
+    valid_records = []
+    invalid_records = []
+    # loop through adif files
+    # for each adif file, grab summary info
+    for entry in adif_files:
+        for record in adif_files[entry]:
+            s_record = synthesize_fields(record)
+            status, errors = test_record(s_record, conditions, summary, valid_records)
+            if errors:
+                invalid_records.append({'data': s_record, 'errors': errors})
+            else:
+                valid_records.append(s_record)
+    scores = calc_scores_tp_dh(valid_records)
+    return valid_records, invalid_records, scores
+
+
 def pskfest_2019(adif_files, summary):
     conditions = {'contest_start': datetime.datetime(2020, 1, 5, 0, 0, 0, 0),
                   'contest_end': datetime.datetime(2020, 1, 5, 23, 59, 59, 0),
