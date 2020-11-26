@@ -5,6 +5,7 @@
 # Create dict of record info from adif input
 
 # TODO: return header information along with records
+# TODO: strip out trailing whitespace after records
 
 import re
 import sys
@@ -50,6 +51,9 @@ def parse_record(linebuf):
     
     for rec in raw_records:
         #print(rec)
+        #TODO: Need to refine this to take into account fields that contain our separator "<"
+        #       for example, <comment:25><a comment with brackets>  breaks the split because
+        #       it thinks <a comment with brackets> is a field
         elements = rec.split('<')
         # Clean up leading stuff (newlines before the record, etc)
         elements.pop(0)
@@ -60,7 +64,7 @@ def parse_record(linebuf):
             field_info = field[0].split(':')
             if len(field_info) < 2:
                 # something is wrong here.  We don't have the right number of items
-                fields['errors'].append(field_info)
+                fields['errors'].append(element)
                 continue
             field_name = field_info[0].lower()
             fields[field_name] = {}
@@ -75,6 +79,9 @@ def parse_record(linebuf):
             # use the length to strip off extra characters in the data so only the 
             # actual data is stored
             try:
+                # TODO: Add a check that length of the field data matches the value we've been given
+                #       Part of the problem here is string length gets confused by newlines, so a
+                #       simple comparison isn't accurate (ie, as-is, this will truncate)
                 fields[field_name]['data'] = field[1][0:fields[field_name]['length']]
             except:
                 fields['errors'].append(field_info)
@@ -97,6 +104,7 @@ def parse(inputfile):
     records = []
     linebuf = ''
 
+    #TODO: add field validation (eg, make sure state info is valid - "ON // ONTARIO" ?)
     with fileinput.input(inputfile,openhook=fileinput.hook_encoded("ISO-8859-1") ) as f:
         for line in f:
             if fileinput.isfirstline():

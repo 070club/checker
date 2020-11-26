@@ -6,6 +6,7 @@
 
 # Things to add
 # TODO : handle missing MODE exception (W3SW example)
+# TODO: look for 070 numbers if none provided in summary for header outputs
 
 import re
 import sys
@@ -585,8 +586,9 @@ arrl_section_to_state = {
 }
 # End of enumerations
 
-# TODO: standardize entries.csv headers
+
 def summary_parser(inputfile, delim):
+    # TODO: standardize entries.csv headers
     import csv
     summary = {}
     # with open(inputfile, newline='', encoding='utf-16') as csvfile:
@@ -597,31 +599,58 @@ def summary_parser(inputfile, delim):
     return summary
 
 
-def triple_play_2019(adif, summary):
-    results = {}  # going to stuff scorer results for all the entries here
-    valid_modes = ['psk', 'bpsk', 'psk31', 'bpsk31', 'qpsk31']
-    valid_dates = [20191109, 20191110, 20191111]
-    conditions = {valid_dates, valid_modes}
-    # loop through adif files
-    # for each adif file, grab summary info
-    for entry in adif:
-        valid_entries, invalid_entries = test_record(entry, valid_dates, summary)
-        print(entry, len(adif[entry]))
-        print(summary[entry])
+def tp_dh_build_date_blocks(summary, conditions):
+    conditions['saturday_0000'] = conditions['contest_start']
+    conditions['sunday_0000'] = conditions['saturday_0000'] + datetime.timedelta(days=1)
+    conditions['monday_0000'] = conditions['sunday_0000'] + datetime.timedelta(days=1)
+    if summary['saturdayStartTime'] != 'None':
+        saturday_start_hours = int(summary['saturdayStartTime']) // 100
+        saturday_start_minutes = int(summary['saturdayStartTime']) - (saturday_start_hours * 100)
+        conditions['saturday_block_start_dt'] = conditions['saturday_0000'] + datetime.timedelta(hours=saturday_start_hours)
+        conditions['saturday_block_start_dt'] = conditions['saturday_block_start_dt'] + datetime.timedelta(minutes=saturday_start_minutes)
+        conditions['saturday_block_end_dt'] = conditions['saturday_block_start_dt'] + datetime.timedelta(hours=5,minutes=59,seconds=59)
+        if conditions['saturday_block_end_dt'] >= conditions['sunday_0000']:
+            conditions['saturday_block_end_dt'] = conditions['sunday_0000'] - datetime.timedelta(seconds=1)
+    if summary['sundayStartTime'] != 'None':
+        sunday_start_hours = int(summary['sundayStartTime']) // 100
+        sunday_start_minutes = int(summary['sundayStartTime']) - (sunday_start_hours * 100)
+        conditions['sunday_block_start_dt'] = conditions['sunday_0000'] + datetime.timedelta(hours=sunday_start_hours)
+        conditions['sunday_block_start_dt'] = conditions['sunday_block_start_dt'] + datetime.timedelta(minutes=sunday_start_minutes)
+        conditions['sunday_block_end_dt'] = conditions['sunday_block_start_dt'] + datetime.timedelta(hours=5,minutes=59,seconds=59)
+        if conditions['sunday_block_end_dt'] >= conditions['monday_0000']:
+            conditions['sunday_block_end_dt'] = conditions['monday_0000'] - datetime.timedelta(seconds=1)
+    if summary['mondayStartTime'] != 'None':
+        monday_start_hours = int(summary['mondayStartTime']) // 100
+        monday_start_minutes = int(summary['mondayStartTime']) - (monday_start_hours * 100)
+        conditions['monday_block_start_dt'] = conditions['monday_0000'] + datetime.timedelta(hours=monday_start_hours)
+        conditions['monday_block_start_dt'] = conditions['monday_block_start_dt'] + datetime.timedelta(minutes=monday_start_minutes)
+        conditions['monday_block_end_dt'] = conditions['monday_block_start_dt'] + datetime.timedelta(hours=5,minutes=59,seconds=59)
+        if conditions['monday_block_end_dt'] >= conditions['contest_end']:
+            conditions['monday_block_end_dt'] = conditions['contest_end']
+    return conditions
 
 
-def doubleheader_2019(adif, summary):
-    results = {}  # going to stuff scorer results for all the entries here
-    valid_modes = ['psk', 'bpsk', 'psk31', 'bpsk31', 'qpsk31']
-    valid_dates = [20191214, 20191215, 20191216]
-    conditions = {valid_dates, valid_modes}
+def triple_play_2020(adif_files, summary):
+    conditions = {'contest_start': datetime.datetime(2020, 11, 14, 00, 00, 00, 0),
+                  'contest_end': datetime.datetime(2020, 11, 16, 23, 59, 59, 0),
+                  'valid_modes': ['psk', 'bpsk', 'psk31', 'bpsk31', 'qpsk31'],
+                  'valid_bands': ['40m', '80m', '160m'],
+                  }
+    conditions = tp_dh_build_date_blocks(summary, conditions)
+    valid_records = []
+    invalid_records = []
     # loop through adif files
     # for each adif file, grab summary info
-    for entry in adif:
-        if test_record(entry, valid_dates, summary):
-            pass
-        print(entry, len(adif[entry]))
-        print(summary[entry])
+    for entry in adif_files:
+        for record in adif_files[entry]:
+            s_record = synthesize_fields(record)
+            status, errors = test_record(s_record, conditions, summary, valid_records)
+            if errors:
+                invalid_records.append({'data': s_record, 'errors': errors})
+            else:
+                valid_records.append(s_record)
+    scores = calc_scores_tp_dh(valid_records)
+    return valid_records, invalid_records, scores
 
 
 def pskfest_2019(adif_files, summary):
@@ -849,10 +878,14 @@ def synthesize_fields(record):
     """Method to build synthetic fields for the values we care about if they are
         empty or broken or something else (e.g., build band from freq)"""
 
+    #TODO: figure out a way to reconcile conflicting information. eg, mismatched DXCC and country,
+    #       both STATE and VE_PROV, etc
+
     # remove fields that have no data
     keys = []
     for key in record.keys(): # This loop is because the dict_key is tied to the dict so we can't delete the field
-        keys.append(key)
+        if key != 'errors':
+            keys.append(key)
     for key in keys:
         if record[key]['length'] == 0:
             del(record[key])
@@ -875,7 +908,7 @@ def synthesize_fields(record):
             s_record['time_on'] = record['time_off']
         else:
             s_record['time_on'] = {'length': 2, 'data': '??'}
-    if 'state' not in record:
+    if 'state' not in record or record['state']['length'] > 2:
         state = get_state(record)
         if state:
             s_record['state'] = state
@@ -938,6 +971,24 @@ def get_om_yl(record):
 def get_state(record):
     """ Walk a list of increasingly poor options to try and find a value for State"""
 
+    if 'state' in record: # This is here to capture invalid state data (eg, ON // ONTARIO)
+        state_data = re.split('[\W\s]{1}', record['state']['data'])
+        for element in state_data:
+            if element.upper() in dxcc_291_states.keys():
+                return {'length': len(element), 'data': element.upper()}
+            if element.upper() in dxcc_1_states.keys():
+                return {'length': len(element), 'data': element.upper()}
+            if element.upper() in ['AK', 'HI']:
+                return {'length': len(element), 'data': element.upper()}
+            for key in dxcc_291_states.keys():
+                if element.upper() == dxcc_291_states[key]['name'].upper():
+                    return {'length': len(key), 'data': key.upper()}
+            for key in dxcc_1_states.keys():
+                if element.upper() == dxcc_1_states[key]['name'].upper():
+                    return {'length': len(key), 'data': key.upper()}
+            if element.upper() in arrl_section_to_state:
+                return {'length': len(arrl_section_to_state[element.upper()]['state']),
+                        'data': arrl_section_to_state[element.upper()]['state']}
     if 've_prov' in record:
         return record['ve_prov']
     if 'app_n1mm_exchange1' in record:
@@ -949,6 +1000,9 @@ def get_state(record):
                 return {'length': len(element), 'data': element.upper()}
             if element.upper() in ['AK', 'HI']:
                 return {'length': len(element), 'data': element.upper()}
+            if element.upper() in arrl_section_to_state:
+                return {'length': len(arrl_section_to_state[element.upper()]['state']),
+                        'data': arrl_section_to_state[element.upper()]['state']}
     if 'app_n1mm_misctext' in record:
         n1mm_data = re.split('[\W\s]{1}', record['app_n1mm_misctext']['data'])
         for element in n1mm_data:
@@ -958,6 +1012,9 @@ def get_state(record):
                 return {'length': len(element), 'data': element.upper()}
             if element.upper() in ['AK', 'HI']:
                 return {'length': len(element), 'data': element.upper()}
+            if element.upper() in arrl_section_to_state:
+                return {'length': len(arrl_section_to_state[element.upper()]['state']),
+                        'data': arrl_section_to_state[element.upper()]['state']}
     if 'srx_string' in record:
         srx_data = re.split('[\W\s]{1}', record['srx_string']['data'])
         for element in srx_data:
@@ -967,6 +1024,9 @@ def get_state(record):
                 return {'length': len(element), 'data': element.upper()}
             if element.upper() in ['AK', 'HI']:
                 return {'length': len(element), 'data': element.upper()}
+            if element.upper() in arrl_section_to_state:
+                return {'length': len(arrl_section_to_state[element.upper()]['state']),
+                        'data': arrl_section_to_state[element.upper()]['state']}
     if 'notes' in record:
         notes_data = re.split('[\W\s]{1}', record['notes']['data'])
         for element in notes_data:
@@ -976,6 +1036,9 @@ def get_state(record):
                 return {'length': len(element), 'data': element.upper()}
             if element.upper() in ['AK', 'HI']:
                 return {'length': len(element), 'data': element.upper()}
+            if element.upper() in arrl_section_to_state:
+                return {'length': len(arrl_section_to_state[element.upper()]['state']),
+                        'data': arrl_section_to_state[element.upper()]['state']}
     if 'rst_rcvd' in record:
         rst_data = re.split('[\W\s]{1}', record['rst_rcvd']['data'])
         for element in rst_data:
@@ -985,6 +1048,9 @@ def get_state(record):
                 return {'length': len(element), 'data': element.upper()}
             if element.upper() in ['AK', 'HI']:
                 return {'length': len(element), 'data': element.upper()}
+            if element.upper() in arrl_section_to_state:
+                return {'length': len(arrl_section_to_state[element.upper()]['state']),
+                        'data': arrl_section_to_state[element.upper()]['state']}
     if 'srx' in record:
         srx_data = re.split('[\W\s]{1}', record['srx']['data'])
         for element in srx_data:
@@ -994,6 +1060,9 @@ def get_state(record):
                 return {'length': len(element), 'data': element.upper()}
             if element.upper() in ['AK', 'HI']:
                 return {'length': len(element), 'data': element.upper()}
+            if element.upper() in arrl_section_to_state:
+                return {'length': len(arrl_section_to_state[element.upper()]['state']),
+                        'data': arrl_section_to_state[element.upper()]['state']}
     if 'comment' in record:
         comment_data = re.split('[\W\s]{1}', record['comment']['data'])
         for element in comment_data:
@@ -1003,6 +1072,9 @@ def get_state(record):
                 return {'length': len(element), 'data': element.upper()}
             if element.upper() in ['AK', 'HI']:
                 return {'length': len(element), 'data': element.upper()}
+            if element.upper() in arrl_section_to_state:
+                return {'length': len(arrl_section_to_state[element.upper()]['state']),
+                        'data': arrl_section_to_state[element.upper()]['state']}
     if 'qth' in record:
         qth_data = record['qth']['data'].upper()
         if len(qth_data) == 2:
@@ -1010,8 +1082,11 @@ def get_state(record):
                 return {'length': len(qth_data), 'data': qth_data}
             if qth_data in dxcc_1_states.keys():
                 return {'length': len(qth_data), 'data': qth_data}
-            if element.upper() in ['AK', 'HI']:
+            if qth_data.upper() in ['AK', 'HI']:
                 return {'length': len(qth_data), 'data': qth_data}
+            if qth_data.upper() in arrl_section_to_state:
+                return {'length': len(arrl_section_to_state[qth_data.upper()]['state']),
+                        'data': arrl_section_to_state[qth_data.upper()]['state']}
         elif len(qth_data) > 2:
             elements = re.split('[,\s]{1}', qth_data)
             for element in elements:
@@ -1021,6 +1096,9 @@ def get_state(record):
                     return {'length': len(element), 'data': element}
                 if element.upper() in ['AK', 'HI']:
                     return {'length': len(element), 'data': element.upper()}
+                if element.upper() in arrl_section_to_state:
+                    return {'length': len(arrl_section_to_state[element.upper()]['state']),
+                            'data': arrl_section_to_state[element.upper()]['state']}
     if 'section' in record:  # Scraping the bottom of the barrel (section is not the same as State)
         if record['section']['data'] in arrl_section_to_state:
             section_state = arrl_section_to_state[record['section']['data']]['state']
@@ -1172,16 +1250,16 @@ def calc_egb(valid_records):
             testchar = suffix[1][0].upper()
         except:
             print(rec)
-
-        if testchar in egb['erin']['letters']:
-            egb['erin']['letters'].remove(testchar)
-            egb['erin']['callsigns'].append(rec['call'])
-        elif testchar in egb['go']['letters']:
-            egb['go']['letters'].remove(testchar)
-            egb['go']['callsigns'].append(rec['call'])
-        elif testchar in egb['bragh']['letters']:
-            egb['bragh']['letters'].remove(testchar)
-            egb['bragh']['callsigns'].append(rec['call'])
+        else:
+            if testchar in egb['erin']['letters']:
+                egb['erin']['letters'].remove(testchar)
+                egb['erin']['callsigns'].append(rec['call'])
+            elif testchar in egb['go']['letters']:
+                egb['go']['letters'].remove(testchar)
+                egb['go']['callsigns'].append(rec['call'])
+            elif testchar in egb['bragh']['letters']:
+                egb['bragh']['letters'].remove(testchar)
+                egb['bragh']['callsigns'].append(rec['call'])
 
     if len(egb['erin']['letters']) == 0: egb['bonus'] += 100
     if len(egb['go']['letters']) == 0: egb['bonus'] += 100
@@ -1241,6 +1319,59 @@ def calc_scores_tdw(valid_records, bonus_stations):
             scores['members'].append(rec['member_number'])
 
     scores['total'] = scores['q-points'] * len(scores['members']) + scores['bonus']
+    return scores
+
+
+def calc_scores_tp_dh(valid_records):
+    """
+        Calculate Scores for Triple Play and Doubleheader.
+        Rules:
+        BANDS: 40, 80 and 160 meters.  Work each station once per band.
+        SCORING: QSO Points - Each contact on 40 meters counts one (1) QSO point.
+                Each contact on 80 meters counts as two (2) QSO points.
+                Each contact on 160 meters counts as three (3) QSO points.
+                Dupes count as zero (0) points.
+        MULTIPLIERS: Each different State/Province/Country (SPC) worked, counted only once (not once per band).
+        First U.S. station worked counts as two (2) multipliers (country and state).
+        First VE station worked counts as two (2) multipliers (country and province).
+        First Alaska station worked counts as two (2) multipliers (country and state).
+        First Hawaii station worked counts as two (2) multipliers (country and state).
+    """
+
+    scores = {}
+    scores['q-points'] = {'40m': [], '80m': [], '160m': []}
+    scores['mults'] = {}
+    scores['mults']['dxcc'] = {}
+    scores['mults']['dxcc']['data'] = []
+    scores['mults']['dxcc']['errors'] = []
+    scores['mults']['state'] = []
+    scores['mults']['band'] = []
+    for rec in valid_records:
+        try:
+            if rec['dxcc']['data'] not in scores['mults']['dxcc']['data']:
+                scores['mults']['dxcc']['data'].append(rec['dxcc']['data'])
+        except:
+            scores['mults']['dxcc']['errors'].append(rec)
+        try:
+            # For now, assuming only US and Canada for states
+            if rec['state']['data'].upper() not in scores['mults']['state'] and \
+                    int(rec['dxcc']['data']) in [1, 6, 110, 291]:
+                scores['mults']['state'].append(rec['state']['data'].upper())
+        except:
+            pass
+        if rec['band']['data'].lower() == '40m':
+            scores['q-points']['40m'].append(rec)
+        elif rec['band']['data'].lower() == '80m':
+            scores['q-points']['80m'].append(rec)
+        elif rec['band']['data'].lower() == '160m':
+            scores['q-points']['160m'].append(rec)
+
+    q_totals = len(scores['q-points']['40m']) + (2*len(scores['q-points']['80m'])) + (3*len(scores['q-points']['160m']))
+    mult_totals = len(scores['mults']['dxcc']['data']) + len(scores['mults']['state'])
+    if mult_totals > 0:
+        scores['total'] = mult_totals * q_totals
+    else:
+        scores['total'] = q_totals
     return scores
 
 
@@ -1308,37 +1439,50 @@ def rec_in_window(entry, conditions, summary):
         qso_dt = datetime.datetime.strptime(qso_start_string, '%Y%m%d%H%M')
 
     if conditions['contest_start'] <= qso_dt <= conditions['contest_end']:
-        try:
-            block_start = int(summary['blockStartTime'])
-        except KeyError:
-            return True
+        if summary['contestName'] in ['tripleplay', 'doubleheader']:
+            if summary['saturdayStartTime'] != 'None':
+                if conditions['saturday_block_start_dt'] <= qso_dt <= conditions['saturday_block_end_dt']:
+                    return True
+            if summary['sundayStartTime'] != 'None':
+                if conditions['sunday_block_start_dt'] <= qso_dt <= conditions['sunday_block_end_dt']:
+                    return True
+            if summary['mondayStartTime'] != 'None':
+                if conditions['monday_block_start_dt'] <= qso_dt <= conditions['monday_block_end_dt']:
+                    return True
+            return False
         else:
-            if summary['contestName'] == '31flavors':
-                if 1000 <= block_start <= 2359:
-                    block_start_string = conditions['contest_start'].strftime('%Y%m%d') + '{:0>4}'.format(
-                        summary['blockStartTime'])
-                else:
-                    day2 = conditions['contest_start'] + datetime.timedelta(days=1)
-                    block_start_string = day2.strftime('%Y%m%d') + '{:0>4}'.format(summary['blockStartTime'])
-            elif summary['contestName'] in ['firecracker', 'jayhudak', 'greatpumpkin']:
-                if 2000 <= block_start <= 2359:
-                    block_start_string = conditions['contest_start'].strftime('%Y%m%d') + '{:0>4}'.format(
-                        summary['blockStartTime'])
-                else:
-                    day2 = conditions['contest_start'] + datetime.timedelta(days=1)
-                    block_start_string = day2.strftime('%Y%m%d') + '{:0>4}'.format(summary['blockStartTime'])
-            else:
-                block_start_string = conditions['contest_start'].strftime('%Y%m%d') + '{:0>4}'.format(
-                    summary['blockStartTime'])
-            block_start_dt = datetime.datetime.strptime(block_start_string, '%Y%m%d%H%M')
-            block_end_dt = block_start_dt + datetime.timedelta(hours=6)
-            if block_end_dt > conditions['contest_end']:
-                block_end_dt = conditions['contest_end']
-
-            if block_start_dt <= qso_dt < block_end_dt:
+            try:
+                block_start = int(summary['blockStartTime'])
+            except KeyError:
+                #TODO: Does it make sense to return True if we can't find a start time?
                 return True
             else:
-                return False
+                if summary['contestName'] == '31flavors':
+                    if 1000 <= block_start <= 2359:
+                        block_start_string = conditions['contest_start'].strftime('%Y%m%d') + '{:0>4}'.format(
+                            summary['blockStartTime'])
+                    else:
+                        day2 = conditions['contest_start'] + datetime.timedelta(days=1)
+                        block_start_string = day2.strftime('%Y%m%d') + '{:0>4}'.format(summary['blockStartTime'])
+                elif summary['contestName'] in ['firecracker', 'jayhudak', 'greatpumpkin']:
+                    if 2000 <= block_start <= 2359:
+                        block_start_string = conditions['contest_start'].strftime('%Y%m%d') + '{:0>4}'.format(
+                            summary['blockStartTime'])
+                    else:
+                        day2 = conditions['contest_start'] + datetime.timedelta(days=1)
+                        block_start_string = day2.strftime('%Y%m%d') + '{:0>4}'.format(summary['blockStartTime'])
+                else:
+                    block_start_string = conditions['contest_start'].strftime('%Y%m%d') + '{:0>4}'.format(
+                        summary['blockStartTime'])
+                block_start_dt = datetime.datetime.strptime(block_start_string, '%Y%m%d%H%M')
+                block_end_dt = block_start_dt + datetime.timedelta(hours=6)
+                if block_end_dt > conditions['contest_end']:
+                    block_end_dt = conditions['contest_end']
+
+                if block_start_dt <= qso_dt < block_end_dt:
+                    return True
+                else:
+                    return False
     else:
         return False
 
@@ -1918,6 +2062,63 @@ def print_score_tdw(scores, summary):
         )
 
 
+def print_score_tp_dh(scores, summary):
+    try:
+        callsign = summary['callsign']
+    except:
+        callsign = None
+    try:
+        category = categories[int(summary['powerlevel'])]
+    except:
+        category = 'unknown'
+    try:
+        podxs_number = summary['070number']
+    except:
+        podxs_number = 'unknown'
+    try:
+        email = summary['email']
+    except:
+        email = None
+    q_points_40 = len(scores['q-points']['40m'])
+    q_points_80 = len(scores['q-points']['80m'])
+    q_points_160 = len(scores['q-points']['160m'])
+    total = scores['total']
+
+    if summary is not None:  # Report only, spit out CSV of call+score
+        print('callsign,category,070-number,email,40mQ,80mQ,160mQ,dxcc-mult,state-mult,total')
+        print('{},{},{},{},{},{},{},{},{},{}'.format(
+            callsign,
+            category,
+            podxs_number,
+            email,
+            q_points_40,
+            q_points_80,
+            q_points_160,
+            len(scores['mults']['dxcc']['data']),
+            len(scores['mults']['state']),
+            total,
+        )
+        )
+    else:
+        print('40mQs:{} 80mQs:{} 160mQs:{} DXCC-Mult:{} STATE-Mult:{} Total:{}'.format(
+            q_points_40,
+            q_points_80,
+            q_points_160,
+            len(scores['mults']['dxcc']['data']),
+            len(scores['mults']['state']),
+            scores['total']
+        )
+        )
+        if scores['mults']['dxcc']['errors']:
+            for error in scores['mults']['dxcc']['errors']:
+                print('DXCC ERRORS: {},{},{}'.format(
+                    error['call']['data'],
+                    error['qso_date']['data'],
+                    error['time_on']['data'],
+                )
+                )
+
+
 def print_header(valid=True):
     if valid:
         print("\ncall,qso_date,time_on,band,srx_string,dxcc,state")
@@ -1991,6 +2192,28 @@ def print_title_block_startblock(summary):
     )
 
 
+def print_title_block_multiple_startblocks(summary):
+    """ Title block for contests with multiple block start times"""
+    try:
+        power = categories[int(summary['powerlevel'])]
+    except:
+        power = 'unknown'
+    try:
+        podxs_number = summary['070number']
+    except:
+        podxs_number = 'unknown'
+    print('\nCALL:{}\nPOWER:{}\nSATURDAY START:{:0>4}\nSUNDAY START:{:0>4}\nMONDAY START:{:0>4}\nEMAIL:{}\n070 Number:{}\n'.format(
+        summary['callsign'],
+        power,
+        summary['saturdayStartTime'],
+        summary['sundayStartTime'],
+        summary['mondayStartTime'],
+        summary['email'],
+        podxs_number,
+    )
+    )
+
+
 def print_title_block_tdw(summary):
     try:
         power = categories[int(summary['powerlevel'])]
@@ -2010,9 +2233,9 @@ def print_title_block_tdw(summary):
 
 
 if __name__ == '__main__':
-    import adifparser
     import argparse
-    import pprint
+    #import adifparser
+    #import pprint
 
     parser = argparse.ArgumentParser(description='Contests Checker')
     parser.add_argument('--contest', metavar='CONTEST')
@@ -2020,14 +2243,3 @@ if __name__ == '__main__':
     parser.add_argument('--adif', metavar='ADIF', nargs='*')
     args = parser.parse_args()
 
-    summary = summary_parser(args.summary)
-    adif_records = {}
-    for adif in args.adif:
-        name, ext = adif.split('.')
-        adif_records[name] = adifparser.parse(adif)
-    pprint.pprint(adif_records)
-    # pprint.pprint(summary)
-    if args.contest == 'tp2019':
-        triple_play_2019(adif_records, summary)
-    if args.contest == 'dh2019':
-        doubleheader_2019(adif_records, summary)
