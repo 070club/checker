@@ -127,30 +127,40 @@ def parse(inputfile):
 
 
 if __name__ == '__main__':
+    import csv
     import argparse
 
     parser = argparse.ArgumentParser(description='ADIF Parser')
-    parser.add_argument('inputfile', metavar='ADIF')
+    parser.add_argument('-i', '--inputfile', action='store', dest='inputfile', metavar='ADIF', required=True)
+    parser.add_argument('-o', '--format', dest='format', default='csv', help='Output format: csv(default), txt')
+    parser.add_argument('-f', '--fields', dest='fields', nargs='*', help='List of output fields',
+                                            default=['call','qso_date','time_on','band','mode'])
+    parser.add_argument('-d', '--debug', dest='debug', help='Debug flag', action='store_true')
+    parser.set_defaults(debug=False)
     args = parser.parse_args()
+    if args.debug:
+        print(args)
 
     records = parse(args.inputfile)
+    headers = args.fields
+
+    if args.format == 'text':
+        output_writer = csv.writer(sys.stdout, delimiter=' ', quoting=csv.QUOTE_ALL)
+    elif args.format == 'csv':
+        output_writer = csv.writer(sys.stdout, dialect='excel', quoting=csv.QUOTE_ALL)
+    output_writer.writerow(headers)
 
     for rec in records:
-        try:
-            print("<CALL:{}>{} <BAND:{}>{} <QSO_DATE:{}>{} <TIME_ON:{}>{} <MODE:{}>{}".format(  
-                rec['call']['length'], 
-                rec['call']['data'],
-                rec['band']['length'],
-                rec['band']['data'],
-                rec['qso_date']['length'],
-                rec['qso_date']['data'],
-                rec['time_on']['length'],
-                rec['time_on']['data'],
-                rec['mode']['length'],
-                rec['mode']['data'],
-                )
-            )
-        except KeyError:
-            print("KeyError for record",file=sys.stderr)
-        for key in sorted(rec):
-            print("<{}:{}>{} ".format(key,rec[key]['length'],rec[key]['data']))
+        output_record = []
+        for header in headers:
+            try:
+                output_record.append(rec[header]['data'])
+            except KeyError:
+                output_record.append('data not found')
+        output_writer.writerow(output_record)
+
+    if args.debug:
+        for rec in records:
+            print("")
+            for key in sorted(rec):
+                print("<{}:{}>{} ".format(key, rec[key]['length'], rec[key]['data']))
