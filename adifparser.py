@@ -5,13 +5,13 @@
 # Create dict of record info from adif input
 
 # TODO: return header information along with records
-# TODO: strip out trailing whitespace after records
+# TODO: return error if not an ADIF file
+# TODO: write a cabrillo parser
+# TODO: write a log parser manager (higher-level call that picks which type to use; ADIF, cabrillo, etc)
 
 import re
 import sys
 import fileinput
-import pprint
-import endorsements
 
 
 def parse_header(linebuf):
@@ -42,6 +42,9 @@ def parse_header(linebuf):
 
 
 def parse_record(linebuf):
+
+    # regex for splitting ADIF elements
+    element_re = re.compile('(<[^>]*:+\d+:*[BNDTSIMGELbndtsimgel]?>)')
     # we will stuff our record fields dictionaries in here
     record_elements = []
     # get raw record strings as a list
@@ -50,41 +53,39 @@ def parse_record(linebuf):
     leftover = raw_records.pop()
     
     for rec in raw_records:
-        #print(rec)
-        #TODO: Need to refine this to take into account fields that contain our separator "<"
-        #       for example, <comment:25><a comment with brackets>  breaks the split because
-        #       it thinks <a comment with brackets> is a field
-        elements = rec.split('<')
+        elements = re.split(element_re, rec)
         # Clean up leading stuff (newlines before the record, etc)
         elements.pop(0)
         fields = {}
         fields['errors'] = [] # bucket for broken stuff
+        field_name = False
         for element in elements:
-            field = element.split('>')
-            field_info = field[0].split(':')
-            if len(field_info) < 2:
-                # something is wrong here.  We don't have the right number of items
-                fields['errors'].append(element)
-                continue
-            field_name = field_info[0].lower()
-            fields[field_name] = {}
-            try:
-                fields[field_name]['length'] = int(field_info[1])
-            except:
-                fields['errors'].append(field_info)
-            try:
-                fields[field_name]['type'] = field_info[2]
-            except:
-                pass
-            # use the length to strip off extra characters in the data so only the 
-            # actual data is stored
-            try:
-                # TODO: Add a check that length of the field data matches the value we've been given
-                #       Part of the problem here is string length gets confused by newlines, so a
-                #       simple comparison isn't accurate (ie, as-is, this will truncate)
-                fields[field_name]['data'] = field[1][0:fields[field_name]['length']]
-            except:
-                fields['errors'].append(field_info)
+            if field_name:
+                stripped_element = element.strip()
+                try:
+                    fields[field_name]['data'] = stripped_element[:fields[field_name]['length']]
+                    if fields[field_name]['length'] != len(fields[field_name]['data']):
+                        fields[field_name]['length'] = len(fields[field_name]['data'])
+                except:
+                    fields['errors'].append(field_name)
+                field_name = False
+            else:
+                field = element.strip('<>')
+                field_info = field.split(':')
+                if len(field_info) < 2:
+                    # something is wrong here.  We don't have the right number of items
+                    fields['errors'].append(element)
+                    continue
+                field_name = field_info[0].lower()
+                fields[field_name] = {}
+                try:
+                    fields[field_name]['length'] = int(field_info[1])
+                except:
+                    fields['errors'].append(field_info)
+                try:
+                    fields[field_name]['type'] = field_info[2]
+                except:
+                    pass
         if len(fields['errors']) == 0:
             del(fields['errors'])
 #        if fields['mode']['data'].lower() in ['psk','bpsk','psk31','bpsk31','qpsk31']: # We want only PSK31 QSOs
@@ -161,6 +162,6 @@ if __name__ == '__main__':
 
     if args.debug:
         for rec in records:
-            print("")
+            print("\n--- NEW RECORD ---")
             for key in sorted(rec):
                 print("<{}:{}>{} ".format(key, rec[key]['length'], rec[key]['data']))
