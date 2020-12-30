@@ -676,33 +676,7 @@ def doubleheader_2020(adif_files, summary):
     return valid_records, invalid_records, scores
 
 
-def pskfest_2019(adif_files, summary):
-    conditions = {'contest_start': datetime.datetime(2020, 1, 5, 0, 0, 0, 0),
-                  'contest_end': datetime.datetime(2020, 1, 5, 23, 59, 59, 0),
-                  'valid_modes': ['psk', 'bpsk', 'psk31', 'bpsk31', 'qpsk31'],
-                  'valid_bands': ['10m', '15m', '20m', '40m', '80m'],
-                  }
-    valid_records = []
-    invalid_records = []
-    # loop through adif files
-    # for each adif file, grab summary info
-    for entry in adif_files:
-        for record in adif_files[entry]:
-            status, errors = test_record(record, conditions, summary, valid_records)
-            if errors:
-                invalid_records.append({'data': record, 'errors': errors})
-            else:
-                valid_records.append(record)
-    scores = calc_scores(valid_records)
-    return valid_records, invalid_records, scores
-
-
-def pskfest_2020(adif_files, summary):
-    conditions = {'contest_start': datetime.datetime(2020, 1, 4, 0, 0, 0, 0),
-                  'contest_end': datetime.datetime(2020, 1, 4, 23, 59, 59, 0),
-                  'valid_modes': ['psk', 'bpsk', 'psk31', 'bpsk31', 'qpsk31'],
-                  'valid_bands': ['10m', '15m', '20m', '40m', '80m'],
-                  }
+def pskfest(adif_files, conditions, summary):
     valid_records = []
     invalid_records = []
     # loop through adif files
@@ -719,16 +693,7 @@ def pskfest_2020(adif_files, summary):
     return valid_records, invalid_records, scores
 
 
-def vdsprint_2019(adif_files, summary):
-    return None
-
-
-def vdsprint_2020(adif_files, summary):
-    conditions = {'contest_start': datetime.datetime(2020, 2, 14, 0, 0, 0, 0),
-                  'contest_end': datetime.datetime(2020, 2, 14, 23, 59, 59, 0),
-                  'valid_modes': ['psk', 'bpsk', 'psk31', 'bpsk31', 'qpsk31'],
-                  'valid_bands': ['40m', '80m', '160m'],
-                  }
+def vdsprint(adif_files, conditions, summary):
     valid_records = []
     invalid_records = []
     # loop through adif files
