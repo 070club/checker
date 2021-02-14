@@ -1832,7 +1832,7 @@ def print_score(scores, summary):
     except:
         podxs_number = 'unknown'
     try:
-        om_yl = summary['Old Man / Young Lady'].upper()
+        om_yl = scores['mults']['yl']
     except:
         om_yl = None
     try:
