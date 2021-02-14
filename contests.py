@@ -2138,19 +2138,19 @@ def print_title_block(summary):
     except:
         podxs_number = 'unknown'
     try:
-        om_yl = summary['Old Man / Young Lady'].upper()
+        om_yl = summary['om_yl'].upper()
     except:
         om_yl = None
 
     if om_yl is None:
-        print('\nCALL:{}\nPOWER:{}\nEMAIL:{}\n'.format(
+        print('\nCALL: {}\nPOWER: {}\nEMAIL: {}\n'.format(
             summary['callsign'],
             powerlevel,
             summary['email'],
         )
         )
     else:
-        print('\nCALL:{}\nPOWER:{}\nCATEGORY:{}\nSTART TIME:{:0>4}\nEMAIL:{}\n'.format(
+        print('\nCALL: {}\nPOWER: {}\nOM/YL: {}\nSTART TIME: {:0>4}\nEMAIL: {}\n'.format(
             summary['callsign'],
             powerlevel,
             om_yl,
