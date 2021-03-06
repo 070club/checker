@@ -943,6 +943,11 @@ def get_om_yl(record):
         for element in name_data:
             if element.upper() in ['OM', 'YL']:
                 return {'length': len(element), 'data': element.upper()}
+    if 'class' in record:
+        class_data = re.split('[\W\s]{1}', record['class']['data'])
+        for element in class_data:
+            if element.upper() in ['OM', 'YL']:
+                return {'length': len(element), 'data': element.upper()}
     if 'other' in record:
         other_data = re.split('[\W\s]{1}', record['other']['data'])
         for element in other_data:
@@ -1087,6 +1092,10 @@ def get_state(record):
                 if element.upper() in arrl_section_to_state:
                     return {'length': len(arrl_section_to_state[element.upper()]['state']),
                             'data': arrl_section_to_state[element.upper()]['state']}
+    if 'arrl_sect' in record:  # Scraping the bottom of the barrel (section is not the same as State)
+        if record['arrl_sect']['data'] in arrl_section_to_state:
+            section_state = arrl_section_to_state[record['arrl_sect']['data']]['state']
+            return {'length': len(section_state), 'data': section_state}
     if 'section' in record:  # Scraping the bottom of the barrel (section is not the same as State)
         if record['section']['data'] in arrl_section_to_state:
             section_state = arrl_section_to_state[record['section']['data']]['state']
@@ -1832,7 +1841,7 @@ def print_score(scores, summary):
     except:
         podxs_number = 'unknown'
     try:
-        om_yl = scores['mults']['yl']
+        om_yl = summary['om_yl'].upper()
     except:
         om_yl = None
     try:
