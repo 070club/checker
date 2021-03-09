@@ -584,6 +584,8 @@ arrl_section_to_state = {
     'WI': {'state': 'WI', 'name': 'Wisconsin', 'dxcc': [291]},
     'WY': {'state': 'WY', 'name': 'Wyoming', 'dxcc': [291]},
 }
+
+
 # End of enumerations
 
 
@@ -606,25 +608,35 @@ def tp_dh_build_date_blocks(summary, conditions):
     if summary['saturdayStartTime'] != 'None':
         saturday_start_hours = int(summary['saturdayStartTime']) // 100
         saturday_start_minutes = int(summary['saturdayStartTime']) - (saturday_start_hours * 100)
-        conditions['saturday_block_start_dt'] = conditions['saturday_0000'] + datetime.timedelta(hours=saturday_start_hours)
-        conditions['saturday_block_start_dt'] = conditions['saturday_block_start_dt'] + datetime.timedelta(minutes=saturday_start_minutes)
-        conditions['saturday_block_end_dt'] = conditions['saturday_block_start_dt'] + datetime.timedelta(hours=5,minutes=59,seconds=59)
+        conditions['saturday_block_start_dt'] = conditions['saturday_0000'] + datetime.timedelta(
+            hours=saturday_start_hours)
+        conditions['saturday_block_start_dt'] = conditions['saturday_block_start_dt'] + datetime.timedelta(
+            minutes=saturday_start_minutes)
+        conditions['saturday_block_end_dt'] = conditions['saturday_block_start_dt'] + datetime.timedelta(hours=5,
+                                                                                                         minutes=59,
+                                                                                                         seconds=59)
         if conditions['saturday_block_end_dt'] >= conditions['sunday_0000']:
             conditions['saturday_block_end_dt'] = conditions['sunday_0000'] - datetime.timedelta(seconds=1)
     if summary['sundayStartTime'] != 'None':
         sunday_start_hours = int(summary['sundayStartTime']) // 100
         sunday_start_minutes = int(summary['sundayStartTime']) - (sunday_start_hours * 100)
         conditions['sunday_block_start_dt'] = conditions['sunday_0000'] + datetime.timedelta(hours=sunday_start_hours)
-        conditions['sunday_block_start_dt'] = conditions['sunday_block_start_dt'] + datetime.timedelta(minutes=sunday_start_minutes)
-        conditions['sunday_block_end_dt'] = conditions['sunday_block_start_dt'] + datetime.timedelta(hours=5,minutes=59,seconds=59)
+        conditions['sunday_block_start_dt'] = conditions['sunday_block_start_dt'] + datetime.timedelta(
+            minutes=sunday_start_minutes)
+        conditions['sunday_block_end_dt'] = conditions['sunday_block_start_dt'] + datetime.timedelta(hours=5,
+                                                                                                     minutes=59,
+                                                                                                     seconds=59)
         if conditions['sunday_block_end_dt'] >= conditions['monday_0000']:
             conditions['sunday_block_end_dt'] = conditions['monday_0000'] - datetime.timedelta(seconds=1)
     if summary['mondayStartTime'] != 'None':
         monday_start_hours = int(summary['mondayStartTime']) // 100
         monday_start_minutes = int(summary['mondayStartTime']) - (monday_start_hours * 100)
         conditions['monday_block_start_dt'] = conditions['monday_0000'] + datetime.timedelta(hours=monday_start_hours)
-        conditions['monday_block_start_dt'] = conditions['monday_block_start_dt'] + datetime.timedelta(minutes=monday_start_minutes)
-        conditions['monday_block_end_dt'] = conditions['monday_block_start_dt'] + datetime.timedelta(hours=5,minutes=59,seconds=59)
+        conditions['monday_block_start_dt'] = conditions['monday_block_start_dt'] + datetime.timedelta(
+            minutes=monday_start_minutes)
+        conditions['monday_block_end_dt'] = conditions['monday_block_start_dt'] + datetime.timedelta(hours=5,
+                                                                                                     minutes=59,
+                                                                                                     seconds=59)
         if conditions['monday_block_end_dt'] >= conditions['contest_end']:
             conditions['monday_block_end_dt'] = conditions['contest_end']
     return conditions
@@ -710,16 +722,7 @@ def vdsprint(adif_files, conditions, summary):
     return valid_records, invalid_records, scores
 
 
-def saintpats_2019(adif_files, summary):
-    return None
-
-
-def saintpats_2020(adif_files, summary):
-    conditions = {'contest_start': datetime.datetime(2020, 3, 21, 0, 0, 0, 0),
-                  'contest_end': datetime.datetime(2020, 3, 21, 23, 59, 59, 0),
-                  'valid_modes': ['psk', 'bpsk', 'psk31', 'bpsk31', 'qpsk31'],
-                  'valid_bands': ['6m', '10m', '15m', '20m', '40m', '80m', '160m'],
-                  }
+def saintpats(adif_files, conditions, summary):
     valid_records = []
     invalid_records = []
     # loop through adif files
@@ -866,17 +869,17 @@ def synthesize_fields(record):
     """Method to build synthetic fields for the values we care about if they are
         empty or broken or something else (e.g., build band from freq)"""
 
-    #TODO: figure out a way to reconcile conflicting information. eg, mismatched DXCC and country,
+    # TODO: figure out a way to reconcile conflicting information. eg, mismatched DXCC and country,
     #       both STATE and VE_PROV, etc
 
     # remove fields that have no data
     keys = []
-    for key in record.keys(): # This loop is because the dict_key is tied to the dict so we can't delete the field
+    for key in record.keys():  # This loop is because the dict_key is tied to the dict so we can't delete the field
         if key != 'errors':
             keys.append(key)
     for key in keys:
         if record[key]['length'] == 0:
-            del(record[key])
+            del (record[key])
 
     s_record = record
 
@@ -964,7 +967,7 @@ def get_om_yl(record):
 def get_state(record):
     """ Walk a list of increasingly poor options to try and find a value for State"""
 
-    if 'state' in record: # This is here to capture invalid state data (eg, ON // ONTARIO)
+    if 'state' in record:  # This is here to capture invalid state data (eg, ON // ONTARIO)
         state_data = re.split('[\W\s]{1}', record['state']['data'])
         for element in state_data:
             if element.upper() in dxcc_291_states.keys():
@@ -1227,15 +1230,15 @@ def calc_egb(valid_records):
         'bonus': 0,
         'erin': {
             'letters': ['E', 'R', 'I', 'N'],
-            'callsigns': []
+            'callsigns': {}
         },
         'go': {
             'letters': ['G', 'O'],
-            'callsigns': []
+            'callsigns': {}
         },
         'bragh': {
             'letters': ['B', 'R', 'A', 'G', 'H'],
-            'callsigns': []
+            'callsigns': {}
         },
     }
     for rec in valid_records:
@@ -1250,13 +1253,13 @@ def calc_egb(valid_records):
         else:
             if testchar in egb['erin']['letters']:
                 egb['erin']['letters'].remove(testchar)
-                egb['erin']['callsigns'].append(rec['call'])
+                egb['erin']['callsigns'][testchar] = rec['call']
             elif testchar in egb['go']['letters']:
                 egb['go']['letters'].remove(testchar)
-                egb['go']['callsigns'].append(rec['call'])
+                egb['go']['callsigns'][testchar] = rec['call']
             elif testchar in egb['bragh']['letters']:
                 egb['bragh']['letters'].remove(testchar)
-                egb['bragh']['callsigns'].append(rec['call'])
+                egb['bragh']['callsigns'][testchar] = rec['call']
 
     if len(egb['erin']['letters']) == 0: egb['bonus'] += 100
     if len(egb['go']['letters']) == 0: egb['bonus'] += 100
@@ -1363,7 +1366,8 @@ def calc_scores_tp_dh(valid_records):
         elif rec['band']['data'].lower() == '160m':
             scores['q-points']['160m'].append(rec)
 
-    q_totals = len(scores['q-points']['40m']) + (2*len(scores['q-points']['80m'])) + (3*len(scores['q-points']['160m']))
+    q_totals = len(scores['q-points']['40m']) + (2 * len(scores['q-points']['80m'])) + (
+                3 * len(scores['q-points']['160m']))
     mult_totals = len(scores['mults']['dxcc']['data']) + len(scores['mults']['state'])
     if mult_totals > 0:
         scores['total'] = mult_totals * q_totals
@@ -1436,7 +1440,7 @@ def rec_in_window(entry, conditions, summary):
         qso_dt = datetime.datetime.strptime(qso_start_string, '%Y%m%d%H%M')
 
     if conditions['contest_start'] <= qso_dt <= conditions['contest_end']:
-        if summary['contestName'] in ['tripleplay', 'doubleheader']:
+        if summary['contestname'] in ['tripleplay', 'doubleheader']:
             if summary['saturdayStartTime'] != 'None':
                 if conditions['saturday_block_start_dt'] <= qso_dt <= conditions['saturday_block_end_dt']:
                     return True
@@ -1451,17 +1455,17 @@ def rec_in_window(entry, conditions, summary):
             try:
                 block_start = int(summary['blockStartTime'])
             except KeyError:
-                #TODO: Does it make sense to return True if we can't find a start time?
+                # TODO: Does it make sense to return True if we can't find a start time?
                 return True
             else:
-                if summary['contestName'] == '31flavors':
+                if summary['contestname'] == '31flavors':
                     if 1000 <= block_start <= 2359:
                         block_start_string = conditions['contest_start'].strftime('%Y%m%d') + '{:0>4}'.format(
                             summary['blockStartTime'])
                     else:
                         day2 = conditions['contest_start'] + datetime.timedelta(days=1)
                         block_start_string = day2.strftime('%Y%m%d') + '{:0>4}'.format(summary['blockStartTime'])
-                elif summary['contestName'] in ['firecracker', 'jayhudak', 'greatpumpkin']:
+                elif summary['contestname'] in ['firecracker', 'jayhudak', 'greatpumpkin']:
                     if 2000 <= block_start <= 2359:
                         block_start_string = conditions['contest_start'].strftime('%Y%m%d') + '{:0>4}'.format(
                             summary['blockStartTime'])
@@ -1923,13 +1927,25 @@ def print_score(scores, summary):
             # list EGB calls
             if len(scores['mults']['egb']['erin']['callsigns']) > 0:
                 print('Erin:')
-                for call in scores['mults']['egb']['erin']['callsigns']: print('    {}'.format(call['data']))
+                for letter in ['E', 'R', 'I', 'N']:
+                    try:
+                        print('    {}'.format(scores['mults']['egb']['erin']['callsigns'][letter]['data']))
+                    except KeyError:
+                        pass
             if len(scores['mults']['egb']['go']['callsigns']) > 0:
                 print('Go:')
-                for call in scores['mults']['egb']['go']['callsigns']: print('    {}'.format(call['data']))
+                for letter in ['G', 'O']:
+                    try:
+                        print('    {}'.format(scores['mults']['egb']['go']['callsigns'][letter]['data']))
+                    except KeyError:
+                        pass
             if len(scores['mults']['egb']['bragh']['callsigns']) > 0:
                 print('Bragh:')
-                for call in scores['mults']['egb']['bragh']['callsigns']: print('    {}'.format(call['data']))
+                for letter in ['B', 'R', 'A', 'G', 'H']:
+                    try:
+                        print('    {}'.format(scores['mults']['egb']['bragh']['callsigns'][letter]['data']))
+                    except KeyError:
+                        pass
         else:
             print('\nQs:{} DXCC:{} STATE:{} Total:{}'.format(
                 scores['q-points'],
@@ -2199,15 +2215,16 @@ def print_title_block_multiple_startblocks(summary):
         podxs_number = summary['070number']
     except:
         podxs_number = 'unknown'
-    print('\nCALL:{}\nPOWER:{}\nSATURDAY START:{:0>4}\nSUNDAY START:{:0>4}\nMONDAY START:{:0>4}\nEMAIL:{}\n070 Number:{}\n'.format(
-        summary['callsign'],
-        power,
-        summary['saturdayStartTime'],
-        summary['sundayStartTime'],
-        summary['mondayStartTime'],
-        summary['email'],
-        podxs_number,
-    )
+    print(
+        '\nCALL:{}\nPOWER:{}\nSATURDAY START:{:0>4}\nSUNDAY START:{:0>4}\nMONDAY START:{:0>4}\nEMAIL:{}\n070 Number:{}\n'.format(
+            summary['callsign'],
+            power,
+            summary['saturdayStartTime'],
+            summary['sundayStartTime'],
+            summary['mondayStartTime'],
+            summary['email'],
+            podxs_number,
+        )
     )
 
 
@@ -2231,12 +2248,9 @@ def print_title_block_tdw(summary):
 
 if __name__ == '__main__':
     import argparse
-    #import adifparser
-    #import pprint
 
     parser = argparse.ArgumentParser(description='Contests Checker')
     parser.add_argument('--contest', metavar='CONTEST')
     parser.add_argument('--summary', metavar='SUMMARY')
     parser.add_argument('--adif', metavar='ADIF', nargs='*')
     args = parser.parse_args()
-
