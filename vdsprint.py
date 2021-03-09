@@ -33,7 +33,7 @@ if __name__ == '__main__':
     adif_files = {}
 
     if args.adif_from_summary:
-        adif = summary[args.call.upper()]['adifFile']
+        adif = summary[args.call.upper()]['adif_file']
         try:
             rootname, ext = os.path.splitext(adif)
         except FileNotFoundError:
