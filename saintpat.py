@@ -45,17 +45,21 @@ if __name__ == '__main__':
     parser.add_argument('--delim', metavar='DELIMITER', default=',' )
     parser.add_argument('--call', metavar='CALL')
     parser.add_argument('--adif', metavar='ADIF', nargs='*')
+    parser.add_argument('--adif-summary', dest='adif_from_summary', action='store_true')
     parser.add_argument('--debug', dest='debug', action='store_true')
     parser.add_argument('--valid-only', dest='valid_only', action='store_true')
     parser.add_argument('--score-only', dest='score_only', action='store_true')
     parser.set_defaults(debug=False)
     parser.set_defaults(valid_only=False)
     parser.set_defaults(score_only=False)
+    parser.set_defaults(adif_from_summary=False)
     args = parser.parse_args()
 
     summary = contests.summary_parser(args.summary, args.delim)
     adif_files = {}
-    for adif in args.adif:
+
+    if args.adif_from_summary:
+        adif = summary[args.call.upper()]['adifFile']
         try:
             rootname, ext = os.path.splitext(adif)
         except FileNotFoundError:
@@ -63,6 +67,15 @@ if __name__ == '__main__':
         else:
             name = os.path.basename(rootname)
             adif_files[name] = adifparser.parse(adif)
+    else:
+        for adif in args.adif:
+            try:
+                rootname, ext = os.path.splitext(adif)
+            except FileNotFoundError:
+                print('File {} not found; skipping'.format(adif), file=sys.stderr)
+            else:
+                name = os.path.basename(rootname)
+                adif_files[name] = adifparser.parse(adif)
 
     if len(adif_files) == 0:
         print("No files found: Exiting", file=sys.stderr)
