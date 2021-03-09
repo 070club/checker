@@ -605,9 +605,9 @@ def tp_dh_build_date_blocks(summary, conditions):
     conditions['saturday_0000'] = conditions['contest_start']
     conditions['sunday_0000'] = conditions['saturday_0000'] + datetime.timedelta(days=1)
     conditions['monday_0000'] = conditions['sunday_0000'] + datetime.timedelta(days=1)
-    if summary['saturdayStartTime'] != 'None':
-        saturday_start_hours = int(summary['saturdayStartTime']) // 100
-        saturday_start_minutes = int(summary['saturdayStartTime']) - (saturday_start_hours * 100)
+    if summary['saturday_start_time'] != 'None':
+        saturday_start_hours = int(summary['saturday_start_time']) // 100
+        saturday_start_minutes = int(summary['saturday_start_time']) - (saturday_start_hours * 100)
         conditions['saturday_block_start_dt'] = conditions['saturday_0000'] + datetime.timedelta(
             hours=saturday_start_hours)
         conditions['saturday_block_start_dt'] = conditions['saturday_block_start_dt'] + datetime.timedelta(
@@ -617,9 +617,9 @@ def tp_dh_build_date_blocks(summary, conditions):
                                                                                                          seconds=59)
         if conditions['saturday_block_end_dt'] >= conditions['sunday_0000']:
             conditions['saturday_block_end_dt'] = conditions['sunday_0000'] - datetime.timedelta(seconds=1)
-    if summary['sundayStartTime'] != 'None':
-        sunday_start_hours = int(summary['sundayStartTime']) // 100
-        sunday_start_minutes = int(summary['sundayStartTime']) - (sunday_start_hours * 100)
+    if summary['sunday_start_time'] != 'None':
+        sunday_start_hours = int(summary['sunday_start_time']) // 100
+        sunday_start_minutes = int(summary['sunday_start_time']) - (sunday_start_hours * 100)
         conditions['sunday_block_start_dt'] = conditions['sunday_0000'] + datetime.timedelta(hours=sunday_start_hours)
         conditions['sunday_block_start_dt'] = conditions['sunday_block_start_dt'] + datetime.timedelta(
             minutes=sunday_start_minutes)
@@ -628,9 +628,9 @@ def tp_dh_build_date_blocks(summary, conditions):
                                                                                                      seconds=59)
         if conditions['sunday_block_end_dt'] >= conditions['monday_0000']:
             conditions['sunday_block_end_dt'] = conditions['monday_0000'] - datetime.timedelta(seconds=1)
-    if summary['mondayStartTime'] != 'None':
-        monday_start_hours = int(summary['mondayStartTime']) // 100
-        monday_start_minutes = int(summary['mondayStartTime']) - (monday_start_hours * 100)
+    if summary['monday_start_time'] != 'None':
+        monday_start_hours = int(summary['monday_start_time']) // 100
+        monday_start_minutes = int(summary['monday_start_time']) - (monday_start_hours * 100)
         conditions['monday_block_start_dt'] = conditions['monday_0000'] + datetime.timedelta(hours=monday_start_hours)
         conditions['monday_block_start_dt'] = conditions['monday_block_start_dt'] + datetime.timedelta(
             minutes=monday_start_minutes)
@@ -1440,41 +1440,41 @@ def rec_in_window(entry, conditions, summary):
         qso_dt = datetime.datetime.strptime(qso_start_string, '%Y%m%d%H%M')
 
     if conditions['contest_start'] <= qso_dt <= conditions['contest_end']:
-        if summary['contestname'] in ['tripleplay', 'doubleheader']:
-            if summary['saturdayStartTime'] != 'None':
+        if summary['contest_name'] in ['tripleplay', 'doubleheader']:
+            if summary['saturday_start_time'] != 'None':
                 if conditions['saturday_block_start_dt'] <= qso_dt <= conditions['saturday_block_end_dt']:
                     return True
-            if summary['sundayStartTime'] != 'None':
+            if summary['sunday_start_time'] != 'None':
                 if conditions['sunday_block_start_dt'] <= qso_dt <= conditions['sunday_block_end_dt']:
                     return True
-            if summary['mondayStartTime'] != 'None':
+            if summary['monday_start_time'] != 'None':
                 if conditions['monday_block_start_dt'] <= qso_dt <= conditions['monday_block_end_dt']:
                     return True
             return False
         else:
             try:
-                block_start = int(summary['blockStartTime'])
+                block_start = int(summary['block_start_time'])
             except KeyError:
                 # TODO: Does it make sense to return True if we can't find a start time?
                 return True
             else:
-                if summary['contestname'] == '31flavors':
+                if summary['contest_name'] == '31flavors':
                     if 1000 <= block_start <= 2359:
                         block_start_string = conditions['contest_start'].strftime('%Y%m%d') + '{:0>4}'.format(
-                            summary['blockStartTime'])
+                            summary['block_start_time'])
                     else:
                         day2 = conditions['contest_start'] + datetime.timedelta(days=1)
-                        block_start_string = day2.strftime('%Y%m%d') + '{:0>4}'.format(summary['blockStartTime'])
-                elif summary['contestname'] in ['firecracker', 'jayhudak', 'greatpumpkin']:
+                        block_start_string = day2.strftime('%Y%m%d') + '{:0>4}'.format(summary['block_start_time'])
+                elif summary['contest_name'] in ['firecracker', 'jayhudak', 'greatpumpkin']:
                     if 2000 <= block_start <= 2359:
                         block_start_string = conditions['contest_start'].strftime('%Y%m%d') + '{:0>4}'.format(
-                            summary['blockStartTime'])
+                            summary['block_start_time'])
                     else:
                         day2 = conditions['contest_start'] + datetime.timedelta(days=1)
-                        block_start_string = day2.strftime('%Y%m%d') + '{:0>4}'.format(summary['blockStartTime'])
+                        block_start_string = day2.strftime('%Y%m%d') + '{:0>4}'.format(summary['block_start_time'])
                 else:
                     block_start_string = conditions['contest_start'].strftime('%Y%m%d') + '{:0>4}'.format(
-                        summary['blockStartTime'])
+                        summary['block_start_time'])
                 block_start_dt = datetime.datetime.strptime(block_start_string, '%Y%m%d%H%M')
                 block_end_dt = block_start_dt + datetime.timedelta(hours=6)
                 if block_end_dt > conditions['contest_end']:
@@ -2179,7 +2179,7 @@ def print_title_block(summary):
             summary['callsign'],
             powerlevel,
             om_yl,
-            summary['blockStartTime'],
+            summary['block_start_time'],
             summary['email'],
         )
         )
@@ -2198,7 +2198,7 @@ def print_title_block_startblock(summary):
     print('\nCALL:{}\nPOWER:{}\nSTART TIME:{:0>4}\nEMAIL:{}\n070 Number:{}\n'.format(
         summary['callsign'],
         power,
-        summary['blockStartTime'],
+        summary['block_start_time'],
         summary['email'],
         podxs_number,
     )
@@ -2219,9 +2219,9 @@ def print_title_block_multiple_startblocks(summary):
         '\nCALL:{}\nPOWER:{}\nSATURDAY START:{:0>4}\nSUNDAY START:{:0>4}\nMONDAY START:{:0>4}\nEMAIL:{}\n070 Number:{}\n'.format(
             summary['callsign'],
             power,
-            summary['saturdayStartTime'],
-            summary['sundayStartTime'],
-            summary['mondayStartTime'],
+            summary['saturday_start_time'],
+            summary['sunday_start_time'],
+            summary['monday_start_time'],
             summary['email'],
             podxs_number,
         )
