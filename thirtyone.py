@@ -5,16 +5,45 @@
 # module for calculating 31 Flavors results
 
 import sys
+import adifparser
+import calendar
+import datetime
+import contests
+import argparse
+import pprint
+import os.path
+
+
+def get_contest_day(year, month):
+    """ Find the first Saturday of the month and return it """
+    cal = calendar.monthcalendar(int(year), month)
+    if args.debug:
+        pprint.pprint(cal)
+    first_week = cal[0]
+    second_week = cal[1]
+    if first_week[calendar.SATURDAY]:
+        return first_week[calendar.SATURDAY]
+    else:
+        return second_week[calendar.SATURDAY]
+
+
+def set_conditions(year):
+    conditions = {
+        'valid_modes': ['psk', 'bpsk',
+                        'psk31', 'bpsk31', 'qpsk31',
+                        'psk63', 'bpsk63', 'qpsk63',
+                        'psk125', 'bpsk125', 'qpsk125',
+                        ],
+        'valid_bands': ['20m'],
+    }
+    contest_day = get_contest_day(year, 4)
+    conditions['contest_start'] = datetime.datetime(year, 4, contest_day, 10, 0, 0, 0)
+    conditions['contest_end'] = datetime.datetime(year, 4, contest_day+1, 3, 59, 59, 0)
+    return conditions
 
 
 if __name__ == '__main__':
-    import adifparser
-    import contests
-    import argparse
-    import pprint
-    import os.path
-
-    parser = argparse.ArgumentParser(description='Contests Checker')
+    parser = argparse.ArgumentParser(description='31 Flavors Contests Checker')
     parser.add_argument('--year', metavar='YEAR')
     parser.add_argument('--summary', metavar='SUMMARY')
     parser.add_argument('--delim', metavar='DELIMITER', default=',' )
@@ -33,7 +62,7 @@ if __name__ == '__main__':
     summary = contests.summary_parser(args.summary, args.delim)
     adif_files = {}
     if args.adif_from_summary:
-        adif = summary[args.call.upper()]['ADIF File']
+        adif = summary[args.call.upper()]['adif_file']
         try:
             rootname, ext = os.path.splitext(adif)
         except FileNotFoundError:
@@ -55,14 +84,13 @@ if __name__ == '__main__':
         print("No files found: Exiting", file=sys.stderr)
         exit(1)
 
-    valid_entries = None
-    invalid_entries = None
-    scores = None
-    if args.year == '2020':
-        valid_entries, invalid_entries, scores = contests.thirtyone_flavors_2020(adif_files, summary[args.call.upper()])
+    if args.year:
+        conditions = set_conditions(int(args.year))
     else:
         print("No year given: Exiting", file=sys.stderr)
         exit(1)
+
+    valid_entries, invalid_entries, scores = contests.thirtyone_flavors(adif_files, conditions, summary[args.call.upper()])
 
     if args.debug:
         pprint.pprint(valid_entries)

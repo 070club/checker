@@ -741,16 +741,7 @@ def saintpats(adif_files, conditions, summary):
     return valid_records, invalid_records, scores
 
 
-def thirtyone_flavors_2020(adif_files, summary):
-    conditions = {'contest_start': datetime.datetime(2020, 4, 4, 10, 00, 00, 0),
-                  'contest_end': datetime.datetime(2020, 4, 5, 3, 59, 59, 0),
-                  'valid_modes': ['psk', 'bpsk',
-                                  'psk31', 'bpsk31', 'qpsk31',
-                                  'psk63', 'bpsk63', 'qpsk63',
-                                  'psk125', 'bpsk125', 'qpsk125',
-                                  ],
-                  'valid_bands': ['20m'],
-                  }
+def thirtyone_flavors(adif_files, conditions, summary):
     valid_records = []
     invalid_records = []
     # loop through adif files
