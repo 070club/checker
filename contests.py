@@ -1267,7 +1267,13 @@ def calc_scores_31flavors(valid_records):
         'mults': {},
     }
     for rec in valid_records:
-        mode = rec['mode']['data']
+        if rec['mode']['data'].lower() in ['qpsk31', 'qpsk63', 'qpsk125']:
+            mode = rec['mode']['data']
+        elif rec['mode']['data'].lower() in ['bpsk31', 'bpsk63', 'bpsk125']:
+            mode = rec['mode']['data']
+        else:
+            mode = ''.join(['B', rec['mode']['data']])
+
         scores['mults'].setdefault(mode, {
             'dxcc': {'data': [], 'errors': [], },
             'state': [],
