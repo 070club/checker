@@ -758,15 +758,7 @@ def thirtyone_flavors(adif_files, conditions, summary):
     return valid_records, invalid_records, scores
 
 
-def tdw_2020(adif_files, summary):
-    conditions = {'contest_start': datetime.datetime(2020, 5, 29, 00, 00, 00, 0),
-                  'contest_end': datetime.datetime(2020, 5, 31, 23, 59, 59, 0),
-                  'valid_modes': ['psk', 'bpsk',
-                                  'psk31', 'bpsk31', 'qpsk31',
-                                  ],
-                  'valid_bands': ['6m', '10m', '15m', '20m', '40m', '80m', '160m'],
-                  'bonus_stations': ['N5SLY', 'VA3TPS', 'KC3FL', 'N9AVY', 'KK6KMU', 'VA7GEM'],
-                  }
+def tdw(adif_files, conditions, summary):
     valid_records = []
     invalid_records = []
     # loop through adif files
@@ -1744,7 +1736,7 @@ def print_entries_31flavors(entries, valid=True):
                 print("KeyError for record", file=sys.stderr)
 
 
-def print_entries_tdw(entries, valid=True):
+def print_entries_tdw(entries, bonus_stations, valid=True):
     if valid:
         print('\nValid QSOs')
         print_header_tdw(valid=True)
@@ -1774,13 +1766,21 @@ def print_entries_tdw(entries, valid=True):
             except:
                 member = ''
             try:
-                print("{},{},{},{},{},{}".format(
+                if rec['call']['data'].upper() in bonus_stations:
+                    bonus = 'Bonus'
+                else:
+                    bonus = ''
+            except:
+                bonus = ''
+            try:
+                print("{},{},{},{},{},{},{}".format(
                     call,
                     qso_date,
                     time_on,
                     band,
                     mode,
                     member,
+                    bonus,
                 )
                 )
             except KeyError:
@@ -2145,7 +2145,7 @@ def print_header_31flavors(valid=True):
 
 def print_header_tdw(valid=True):
     if valid:
-        print("\ncall,qso_date,time_on,band,mode,member")
+        print("\ncall,qso_date,time_on,band,mode,member,bonus")
     else:
         print("\ncall,qso_date,time_on,band,mode,member,errors")
 
