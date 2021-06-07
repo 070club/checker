@@ -6,7 +6,7 @@ import os.path
 
 # TODO: generalize MAX_VALID so is_member can be called with a specific value
 #MAX_VALID = 2759  # TDW 2020 maximum
-MAX_VALID = 2841  # TDW 2021 maximum
+MAX_VALID = 2842  # TDW 2021 maximum
 
 
 def get_memberlist(inputfile):
