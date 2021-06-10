@@ -3,15 +3,12 @@
 import csv
 import pprint
 import os.path
-
-# TODO: generalize MAX_VALID so is_member can be called with a specific value
-#MAX_VALID = 2759  # TDW 2020 maximum
-MAX_VALID = 2842  # TDW 2021 maximum
+import collections
 
 
 def get_memberlist(inputfile):
     """ Helper to create the Ordered Dict of member numbers"""
-    memberlist = {}
+    memberlist = collections.OrderedDict()
     with open(inputfile, newline='') as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
@@ -24,7 +21,7 @@ _dirname = os.path.dirname(__file__)
 memberlist = get_memberlist(_dirname + '/podxs070_callsigns.txt')
 
 
-def is_member(call):
+def is_member(call, max_valid=None):
     """
         Walks the list of members to find the 070# that matches the callsign
         This assumes there's a one-to-one mapping, which may not be true (eg,
@@ -34,8 +31,13 @@ def is_member(call):
 
     splitcall = call.split('/')
 
+    if max_valid is None:
+        last_entry = next(reversed(memberlist))
+    else:
+        last_entry = max_valid
+
     for entry in memberlist:
-        if int(entry) <= MAX_VALID:
+        if int(entry) <= int(last_entry):
             for record in memberlist[entry]:
                 if len(splitcall) == 1:
                     if call.upper() == record['call'].upper():

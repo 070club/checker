@@ -4,7 +4,8 @@
 #
 # module for calculating Three Day Weekend results
 
-# TODO: Programmatically find Memorial Day (maybe pull from usa.gov?)
+# TODO: Programmatically find Memorial Day (maybe pull from usa.gov?) Need a way to default to something
+#       sane if data is not accessible online
 
 import sys
 import datetime
@@ -19,10 +20,13 @@ def set_conditions(year):
         conditions['contest_start'] = datetime.datetime(year, 6, 4, 0, 0, 0, 0)
         conditions['contest_end'] = datetime.datetime(year, 6, 6, 23, 59, 59, 0)
         conditions['bonus_stations'] = ['N5SLY', 'N9AVY', 'KB3RAN', 'N6MG', 'KC3FL', 'KE5PYF', 'KD6TR', 'VA7GEM']
+        conditions['max_member'] = 2842  # TDW 2021 maximum
+
     elif year == 2020:
         conditions['contest_start'] = datetime.datetime(year, 5, 29, 00, 00, 00, 0)
         conditions['contest_end'] = datetime.datetime(year, 5, 31, 23, 59, 59, 0)
         conditions['bonus_stations'] = ['N5SLY', 'VA3TPS', 'KC3FL', 'N9AVY', 'KK6KMU', 'VA7GEM']
+        conditions['max_member'] = 2759  # TDW 2020 maximum
     return conditions
 
 
@@ -79,9 +83,6 @@ if __name__ == '__main__':
         print("No year given: Exiting", file=sys.stderr)
         exit(1)
 
-    valid_entries = None
-    invalid_entries = None
-    scores = None
     valid_entries, invalid_entries, scores = contests.tdw(adif_files, conditions, summary[args.call.upper()])
 
     if args.debug:

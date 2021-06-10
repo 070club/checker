@@ -7,7 +7,8 @@
 # Things to add
 # TODO : handle missing MODE exception (W3SW example)
 # TODO: look for 070 numbers if none provided in summary for header outputs
-# TODO: handle the case of mobile calls (eg, W9SMR and W9SMR/9 are the same thing)
+# TODO: handle the case of mobile calls (eg, W9SMR and W9SMR/9 are the same thing) This is fixed in TDW
+#       but there are other places where this is helpful
 
 import re
 import sys
@@ -767,7 +768,7 @@ def tdw(adif_files, conditions, summary):
     for entry in adif_files:
         for record in adif_files[entry]:
             s_record = synthesize_fields(record)
-            s_record['member_number'] = get_member_number(s_record)
+            s_record['member_number'] = get_member_number(s_record, conditions['max_member'])
             status, errors = test_record(s_record, conditions, summary, valid_records)
             if errors:
                 invalid_records.append({'data': s_record, 'errors': errors})
@@ -1158,9 +1159,12 @@ def get_band_from_freq(freq):
     return band
 
 
-def get_member_number(record):
+def get_member_number(record, max_valid=None):
     """ look for member numbers in various places for TDW"""
-    matchmember = members.is_member(record['call']['data'])
+    if max_valid is None:
+        matchmember = members.is_member(record['call']['data'])
+    else:
+        matchmember = members.is_member(record['call']['data'], max_valid)
     if matchmember:
         return matchmember
     else:
@@ -1227,7 +1231,8 @@ def calc_egb(valid_records):
     }
     for rec in valid_records:
         # TODO: Make the suffix identification more robust (ie, account for weird digit placement)
-        #       for example: DU1/N6HPX should be "H"
+        #       for example: DU1/N6HPX should be "H"  Find some way to split on /, then pull out
+        #       the base callsign
 
         suffix = re.split('\d+', rec['call']['data'])
         try:
