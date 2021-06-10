@@ -7,6 +7,7 @@
 # Things to add
 # TODO : handle missing MODE exception (W3SW example)
 # TODO: look for 070 numbers if none provided in summary for header outputs
+# TODO: handle the case of mobile calls (eg, W9SMR and W9SMR/9 are the same thing)
 
 import re
 import sys

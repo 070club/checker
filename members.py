@@ -31,11 +31,19 @@ def is_member(call):
         SK reassignment), but should be generally ok.  Returns the 070# if found
         otherwise, returns False
     """
+
+    splitcall = call.split('/')
+
     for entry in memberlist:
         if int(entry) <= MAX_VALID:
             for record in memberlist[entry]:
-                if call.upper() == record['call'].upper():
-                    return entry
+                if len(splitcall) == 1:
+                    if call.upper() == record['call'].upper():
+                        return entry
+                else:
+                    for item in splitcall:
+                        if item.upper() == record['call'].upper():
+                            return entry
     return False
 
 
