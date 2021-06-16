@@ -599,7 +599,8 @@ def summary_parser(inputfile, delim):
     with open(inputfile, newline='') as csvfile:
         reader = csv.DictReader(csvfile, delimiter=delim)
         for row in reader:
-            summary[row['callsign']] = row
+            # TODO: strip whitespace in all summary fields
+            summary[row['callsign'].strip()] = row
     return summary
 
 
@@ -868,6 +869,7 @@ def synthesize_fields(record):
 
     s_record = record
 
+    # TODO: input validation for all the elements (for example: NA8W's invalid freq "14070PSK31" in TDW 2021)
     if 'band' not in record:
         if 'freq' in record:
             freq = float(record['freq']['data'].replace(',', '.'))
