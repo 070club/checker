@@ -9,6 +9,7 @@
 # TODO: look for 070 numbers if none provided in summary for header outputs
 # TODO: handle the case of mobile calls (eg, W9SMR and W9SMR/9 are the same thing) This is fixed in TDW
 #       but there are other places where this is helpful
+# TODO: Add check for invalid year in all contests (see firecracker.py for example)
 
 import re
 import sys
@@ -779,14 +780,7 @@ def tdw(adif_files, conditions, summary):
     return valid_records, invalid_records, scores
 
 
-def firecracker_2020(adif_files, summary):
-    conditions = {'contest_start': datetime.datetime(2020, 7, 4, 20, 00, 00, 0),
-                  'contest_end': datetime.datetime(2020, 7, 5, 19, 59, 59, 0),
-                  'valid_modes': ['psk', 'bpsk',
-                                  'psk31', 'bpsk31', 'qpsk31',
-                                  ],
-                  'valid_bands': ['40m'],
-                  }
+def firecracker(adif_files, conditions, summary):
     valid_records = []
     invalid_records = []
     # loop through adif files
