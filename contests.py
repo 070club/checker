@@ -797,14 +797,7 @@ def firecracker(adif_files, conditions, summary):
     return valid_records, invalid_records, scores
 
 
-def jayhudak_2020(adif_files, summary):
-    conditions = {'contest_start': datetime.datetime(2020, 9, 5, 20, 00, 00, 0),
-                  'contest_end': datetime.datetime(2020, 9, 6, 19, 59, 59, 0),
-                  'valid_modes': ['psk', 'bpsk',
-                                  'psk31', 'bpsk31', 'qpsk31',
-                                  ],
-                  'valid_bands': ['80m'],
-                  }
+def jayhudak(adif_files, conditions, summary):
     valid_records = []
     invalid_records = []
     # loop through adif files

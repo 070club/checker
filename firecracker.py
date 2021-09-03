@@ -30,12 +30,13 @@ def get_contest_day(year, month):
 
 
 def set_conditions(year):
-    contest_day = get_contest_day(year, 7)
+    month = 7
+    contest_day = get_contest_day(year, month)
     conditions = {
         'valid_modes': ['psk', 'bpsk', 'psk31', 'bpsk31', 'qpsk31', ],
         'valid_bands': ['40m'],
-        'contest_start': datetime.datetime(year, 7, contest_day, 20, 00, 00, 0),
-        'contest_end': datetime.datetime(year, 7, contest_day+1, 19, 59, 59, 0),
+        'contest_start': datetime.datetime(year, month, contest_day, 20, 00, 00, 0),
+        'contest_end': datetime.datetime(year, month, contest_day+1, 19, 59, 59, 0),
     }
     return conditions
 
