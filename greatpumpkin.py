@@ -7,6 +7,20 @@
 import sys
 
 
+def set_conditions(year):
+    month = 10
+    day = contests.calendar.SATURDAY
+    nth_day = 2
+    contest_day = contests.get_contest_day(year, month, day, nth_day)
+    conditions = {
+        'valid_modes': ['psk', 'bpsk', 'psk31', 'bpsk31', 'qpsk31', ],
+        'valid_bands': ['160m'],
+        'contest_start': contests.datetime.datetime(year, month, contest_day, 20, 00, 00, 0),
+        'contest_end': contests.datetime.datetime(year, month, contest_day+1, 19, 59, 59, 0),
+    }
+    return conditions
+
+
 if __name__ == '__main__':
     import adifparser
     import contests
@@ -29,6 +43,17 @@ if __name__ == '__main__':
     parser.set_defaults(valid_only=False)
     parser.set_defaults(score_only=False)
     args = parser.parse_args()
+
+    if args.year:
+        # TODO: Move try block into set_conditions. This is too broad as-is
+        try:
+            conditions = set_conditions(int(args.year))
+        except ValueError:
+            print("Invalid year given (must be in the form YYYY): Exiting", file=sys.stderr)
+            exit(1)
+    else:
+        print("No year given: Exiting", file=sys.stderr)
+        exit(1)
 
     summary = contests.summary_parser(args.summary, args.delim)
     adif_files = {}
@@ -58,11 +83,7 @@ if __name__ == '__main__':
     valid_entries = None
     invalid_entries = None
     scores = None
-    if args.year == '2020':
-        valid_entries, invalid_entries, scores = contests.greatpumpkin_2020(adif_files, summary[args.call.upper()])
-    else:
-        print("No year given: Exiting", file=sys.stderr)
-        exit(1)
+    valid_entries, invalid_entries, scores = contests.greatpumpkin(adif_files, conditions, summary[args.call.upper()])
 
     if args.debug:
         pprint.pprint(valid_entries)

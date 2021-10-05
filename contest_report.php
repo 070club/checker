@@ -98,6 +98,9 @@ if($lookup_contest == 'firecracker'){
 if($lookup_contest == 'jayhudak'){
     array_push($header, 'block_start_time');
 }
+if($lookup_contest == 'greatpumpkin'){
+    array_push($header, 'block_start_time');
+}
 $header_csv = implode(",", $header);
 $header_csv_nl = $header_csv . "\n";
 

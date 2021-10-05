@@ -15,6 +15,7 @@ import re
 import sys
 import datetime
 import members
+import calendar
 
 # Enumerations
 categories = {
@@ -814,14 +815,7 @@ def jayhudak(adif_files, conditions, summary):
     return valid_records, invalid_records, scores
 
 
-def greatpumpkin_2020(adif_files, summary):
-    conditions = {'contest_start': datetime.datetime(2020, 10, 10, 20, 00, 00, 0),
-                  'contest_end': datetime.datetime(2020, 10, 11, 19, 59, 59, 0),
-                  'valid_modes': ['psk', 'bpsk',
-                                  'psk31', 'bpsk31', 'qpsk31',
-                                  ],
-                  'valid_bands': ['160m'],
-                  }
+def greatpumpkin(adif_files, conditions, summary):
     valid_records = []
     invalid_records = []
     # loop through adif files
@@ -884,6 +878,23 @@ def synthesize_fields(record):
     if 'submode' in record:  # 31 Flavors put submode in mode
         s_record['mode'] = record['submode']
     return s_record
+
+
+def get_contest_day(year, month, day, nth_day=1, afterday=0 ):
+    """ calculate the contest start day from supplied inputs
+        year: contest year (int)
+        month: contest month (int)
+        day: contest start day (int)
+        nth_day: nth day (eg, 2nd, 3rd day of the month) defaults to 1 (int)
+        afterday: after specific day of the month (eg,  after July 1) (int)
+    """
+    cal = calendar.monthcalendar(year, month)
+    nth_day_counter = 0
+    for week in cal:
+        if week[day] != 0:
+            nth_day_counter += 1
+        if nth_day_counter == nth_day and week[day] > afterday:
+            return week[day]
 
 
 def get_om_yl(record):
