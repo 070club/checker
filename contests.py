@@ -928,17 +928,28 @@ def set_conditions(year, contest):
         }
 
     if contest == 'tdw':
-        # TODO : Need to calculate holiday info (month may depend on this)
-        month = 6
-        day = calendar.SATURDAY
-        nth_day = 2
-        contest_day = get_contest_day(year, month, day, nth_day)
         conditions = {
             'valid_modes': ['psk', 'bpsk', 'psk31', 'bpsk31', 'qpsk31', ],
-            'valid_bands': ['160m'],
-            'contest_start': datetime.datetime(year, month, contest_day, 20, 00, 00, 0),
-            'contest_end': datetime.datetime(year, month, contest_day+1, 19, 59, 59, 0),
+            'valid_bands': ['6m', '10m', '15m', '20m', '40m', '80m', '160m'],
         }
+        last_monday = get_last_day_of_month(year, 5, calendar.MONDAY)
+        if last_monday > 26:
+            day = calendar.SATURDAY
+            month = 6
+            nth_day = 1
+            contest_day = get_contest_day(year, month, day, nth_day)
+            conditions['contest_start'] = datetime.datetime(year, month, contest_day, 00, 00, 00, 0)
+            conditions['contest_end'] = datetime.datetime(year, month, contest_day+2, 23, 59, 59, 0)
+        else:
+            month = 5
+            contest_day = last_monday + 5
+            conditions['contest_start'] = datetime.datetime(year, month, contest_day, 00, 00, 00, 0)
+            try:
+                conditions['contest_end'] = datetime.datetime(year, month, contest_day+2, 23, 59, 59, 0)
+            except ValueError:
+                month = 6
+                contest_end_day = get_contest_day(year, month, calendar.MONDAY)
+                conditions['contest_end'] = datetime.datetime(year, month, contest_end_day, 23, 59, 59, 0)
 
     if contest == 'firecracker':
         month = 7
@@ -1019,6 +1030,17 @@ def get_contest_day(year, month, day, nth_day=1, afterday=0 ):
             nth_day_counter += 1
         if nth_day_counter == nth_day and week[day] > afterday:
             return week[day]
+
+
+def get_last_day_of_month(year, month, day):
+    """ calculate the last day of the month for a specific day
+    """
+    last_day = None
+    cal = calendar.monthcalendar(year, month)
+    for week in cal:
+        if week[day] != 0:
+            last_day = week[day]
+    return last_day
 
 
 def get_om_yl(record):
@@ -1627,55 +1649,55 @@ def print_entries(entries, valid=True):
         for rec in entries:
             try:
                 call = rec['call']['data'].upper()
-            except:
+            except KeyError:
                 call = ''
             try:
                 qso_date = rec['qso_date']['data']
-            except:
+            except KeyError:
                 qso_date = ''
             try:
                 time_on = rec['time_on']['data']
-            except:
+            except KeyError:
                 time_on = ''
             try:
                 band = rec['band']['data']
-            except:
+            except KeyError:
                 band = ''
             try:
                 srx_string = rec['srx_string']['data']
-            except:
+            except KeyError:
                 try:
                     srx_string = rec['srx']['data']
-                except:
+                except KeyError:
                     try:
                         srx_string = rec['rst_rcvd']['data']
-                    except:
+                    except KeyError:
                         try:
                             srx_string = rec['comment']['data']
-                        except:
+                        except KeyError:
                             try:
                                 srx_string = rec['notes']['data']
-                            except:
+                            except KeyError:
                                 try:
                                     srx_string = rec['app_n1mm_misctext']['data']
-                                except:
+                                except KeyError:
                                     try:
                                         srx_string = rec['name']['data']
-                                    except:
+                                    except KeyError:
                                         try:
                                             srx_string = rec['other']['data']
-                                        except:
+                                        except KeyError:
                                             try:
                                                 srx_string = rec['award']['data']
-                                            except:
+                                            except KeyError:
                                                 srx_string = ''
             try:
                 dxcc = rec['dxcc']['data']
-            except:
+            except KeyError:
                 dxcc = ''
             try:
                 state = rec['state']['data'].upper()
-            except:
+            except KeyError:
                 state = ''
             try:
                 print("{},{},{},{},{},{},{}".format(
@@ -1696,31 +1718,31 @@ def print_entries(entries, valid=True):
         for rec in entries:
             try:
                 call = rec['data']['call']['data']
-            except:
+            except KeyError:
                 call = ''
             try:
                 qso_date = rec['data']['qso_date']['data']
-            except:
+            except KeyError:
                 qso_date = ''
             try:
                 time_on = rec['data']['time_on']['data']
-            except:
+            except KeyError:
                 time_on = ''
             try:
                 band = rec['data']['band']['data']
-            except:
+            except KeyError:
                 band = ''
             try:
                 srx_string = rec['data']['srx_string']['data']
-            except:
+            except KeyError:
                 srx_string = ''
             try:
                 dxcc = rec['data']['dxcc']['data']
-            except:
+            except KeyError:
                 dxcc = ''
             try:
                 state = rec['data']['state']['data']
-            except:
+            except KeyError:
                 state = ''
             try:
                 print("{},{},{},{},{},{},{},{}".format(
@@ -2336,11 +2358,11 @@ def print_title_block_multiple_startblocks(summary):
     """ Title block for contests with multiple block start times"""
     try:
         power = categories[int(summary['powerlevel'])]
-    except:
+    except KeyError:
         power = 'unknown'
     try:
         podxs_number = summary['070number']
-    except:
+    except KeyError:
         podxs_number = 'unknown'
     print(
         '\nCALL:{}\nPOWER:{}\nSATURDAY START:{:0>4}\nSUNDAY START:{:0>4}\nMONDAY START:{:0>4}\nEMAIL:{}\n070 Number:{}\n'.format(
@@ -2358,11 +2380,11 @@ def print_title_block_multiple_startblocks(summary):
 def print_title_block_tdw(summary):
     try:
         power = categories[int(summary['powerlevel'])]
-    except:
+    except KeyError:
         power = 'unknown'
     try:
         podxs_number = summary['070number']
-    except:
+    except KeyError:
         podxs_number = 'unknown'
     print('\nCALL:{}\nPOWER:{}\nEMAIL:{}\n070 Number:{}\n'.format(
         summary['callsign'],

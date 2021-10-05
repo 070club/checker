@@ -4,27 +4,16 @@
 #
 # module for calculating Three Day Weekend results
 
-# TODO: Programmatically find Memorial Day (maybe pull from usa.gov?) Need a way to default to something
-#       sane if data is not accessible online
-
 import sys
-import datetime
+
+# TODO : Programmatically determine max member number from google sheet
 
 
-def set_conditions(year):
-    conditions = {
-        'valid_modes': ['psk', 'bpsk', 'psk31', 'bpsk31', 'qpsk31', ],
-        'valid_bands': ['6m', '10m', '15m', '20m', '40m', '80m', '160m'],
-    }
+def set_member_conditions(year, conditions):
     if year == 2021:
-        conditions['contest_start'] = datetime.datetime(year, 6, 4, 0, 0, 0, 0)
-        conditions['contest_end'] = datetime.datetime(year, 6, 6, 23, 59, 59, 0)
         conditions['bonus_stations'] = ['N5SLY', 'N9AVY', 'KB3RAN', 'N6MG', 'KC3FL', 'KE5PYF', 'KD6TR', 'VA7GEM']
         conditions['max_member'] = 2842  # TDW 2021 maximum
-
     elif year == 2020:
-        conditions['contest_start'] = datetime.datetime(year, 5, 29, 00, 00, 00, 0)
-        conditions['contest_end'] = datetime.datetime(year, 5, 31, 23, 59, 59, 0)
         conditions['bonus_stations'] = ['N5SLY', 'VA3TPS', 'KC3FL', 'N9AVY', 'KK6KMU', 'VA7GEM']
         conditions['max_member'] = 2759  # TDW 2020 maximum
     return conditions
@@ -40,7 +29,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Contests Checker')
     parser.add_argument('--year', metavar='YEAR')
     parser.add_argument('--summary', metavar='SUMMARY')
-    parser.add_argument('--delim', metavar='DELIMITER', default=',' )
+    parser.add_argument('--delim', metavar='DELIMITER', default=',')
     parser.add_argument('--call', metavar='CALL')
     parser.add_argument('--adif-summary', dest='adif_from_summary', action='store_true')
     parser.add_argument('--adif', metavar='ADIF', nargs='*')
@@ -52,6 +41,13 @@ if __name__ == '__main__':
     parser.set_defaults(valid_only=False)
     parser.set_defaults(score_only=False)
     args = parser.parse_args()
+
+    if args.year:
+        conditions = contests.set_conditions(int(args.year), 'tdw')
+        conditions = set_member_conditions(int(args.year), conditions)
+    else:
+        print("No year given: Exiting", file=sys.stderr)
+        exit(1)
 
     summary = contests.summary_parser(args.summary, args.delim)
     adif_files = {}
@@ -76,11 +72,6 @@ if __name__ == '__main__':
 
     if len(adif_files) == 0:
         print("No files found: Exiting", file=sys.stderr)
-        exit(1)
-    if args.year:
-        conditions = set_conditions(int(args.year))
-    else:
-        print("No year given: Exiting", file=sys.stderr)
         exit(1)
 
     valid_entries, invalid_entries, scores = contests.tdw(adif_files, conditions, summary[args.call.upper()])
