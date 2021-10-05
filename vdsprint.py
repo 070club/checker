@@ -10,7 +10,6 @@ import contests
 import argparse
 import pprint
 import os.path
-import datetime
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Contests Checker')
@@ -28,6 +27,17 @@ if __name__ == '__main__':
     parser.set_defaults(valid_only=False)
     parser.set_defaults(score_only=False)
     args = parser.parse_args()
+
+    if args.year:
+        # TODO: Move try block into set_conditions. This is too broad as-is
+        try:
+            conditions = contests.set_conditions(int(args.year), 'vdsprint')
+        except ValueError:
+            print("Invalid year given (must be in the form YYYY): Exiting", file=sys.stderr)
+            exit(1)
+    else:
+        print("No year given: Exiting", file=sys.stderr)
+        exit(1)
 
     summary = contests.summary_parser(args.summary, args.delim)
     adif_files = {}
@@ -55,20 +65,9 @@ if __name__ == '__main__':
         print("No files found: Exiting", file=sys.stderr)
         exit(1)
 
-    conditions = {
-        'valid_modes': ['psk', 'bpsk', 'psk31', 'bpsk31', 'qpsk31'],
-        'valid_bands': ['40m', '80m', '160m'],
-    }
-    if args.year == '2021':
-        conditions['contest_start'] = datetime.datetime(2021, 2, 14, 0, 0, 0, 0)
-        conditions['contest_end'] = datetime.datetime(2021, 2, 14, 23, 59, 59, 0)
-    elif args.year == '2020':
-        conditions['contest_start'] = datetime.datetime(2020, 2, 14, 0, 0, 0, 0)
-        conditions['contest_end'] = datetime.datetime(2020, 2, 14, 23, 59, 59, 0)
-    else:
-        print("No year given: Exiting", file=sys.stderr)
-        exit(1)
-
+    valid_entries = None
+    invalid_entries = None
+    scores = None
     valid_entries, invalid_entries, scores = contests.vdsprint(adif_files, conditions, summary[args.call.upper()])
 
     if args.debug:

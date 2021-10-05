@@ -101,6 +101,12 @@ if($lookup_contest == 'jayhudak'){
 if($lookup_contest == 'greatpumpkin'){
     array_push($header, 'block_start_time');
 }
+if($lookup_contest == 'tripleplay'){
+    array_push($header, 'block_start_time', 'saturday_start_time', 'sunday_start_time', 'monday_start_time');
+}
+if($lookup_contest == 'doubleheader'){
+    array_push($header, 'block_start_time', 'saturday_start_time', 'sunday_start_time', 'monday_start_time');
+}
 $header_csv = implode(",", $header);
 $header_csv_nl = $header_csv . "\n";
 

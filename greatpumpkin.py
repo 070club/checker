@@ -5,29 +5,13 @@
 # module for calculating the 160m Great Pumpkin Sprint results
 
 import sys
-
-
-def set_conditions(year):
-    month = 10
-    day = contests.calendar.SATURDAY
-    nth_day = 2
-    contest_day = contests.get_contest_day(year, month, day, nth_day)
-    conditions = {
-        'valid_modes': ['psk', 'bpsk', 'psk31', 'bpsk31', 'qpsk31', ],
-        'valid_bands': ['160m'],
-        'contest_start': contests.datetime.datetime(year, month, contest_day, 20, 00, 00, 0),
-        'contest_end': contests.datetime.datetime(year, month, contest_day+1, 19, 59, 59, 0),
-    }
-    return conditions
-
+import adifparser
+import contests
+import argparse
+import pprint
+import os.path
 
 if __name__ == '__main__':
-    import adifparser
-    import contests
-    import argparse
-    import pprint
-    import os.path
-
     parser = argparse.ArgumentParser(description='Contests Checker')
     parser.add_argument('--year', metavar='YEAR')
     parser.add_argument('--summary', metavar='SUMMARY')
@@ -47,7 +31,7 @@ if __name__ == '__main__':
     if args.year:
         # TODO: Move try block into set_conditions. This is too broad as-is
         try:
-            conditions = set_conditions(int(args.year))
+            conditions = contests.set_conditions(int(args.year), 'greatpumpkin')
         except ValueError:
             print("Invalid year given (must be in the form YYYY): Exiting", file=sys.stderr)
             exit(1)

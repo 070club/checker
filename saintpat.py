@@ -6,36 +6,10 @@
 
 import adifparser
 import contests
-import calendar
-import datetime
 import argparse
 import pprint
 import os.path
 import sys
-
-
-def get_contest_day(year, month):
-    """ Find the third Saturday of the month and return it """
-    cal = calendar.monthcalendar(int(year), month)
-    if args.debug:
-        pprint.pprint(cal)
-    first_week = cal[0]
-    third_week = cal[2]
-    fourth_week = cal[3]
-    if first_week[calendar.SATURDAY]:
-        return third_week[calendar.SATURDAY]
-    else:
-        return fourth_week[calendar.SATURDAY]
-
-def set_conditions(year):
-    conditions = {
-        'valid_modes': ['psk', 'bpsk', 'psk31', 'bpsk31', 'qpsk31'],
-        'valid_bands': ['6m', '10m', '15m', '20m', '40m', '80m', '160m'],
-    }
-    contest_day = get_contest_day(year, 3)
-    conditions['contest_start'] = datetime.datetime(year, 3, contest_day, 0, 0, 0, 0)
-    conditions['contest_end'] = datetime.datetime(year, 3, contest_day, 23, 59, 59, 0)
-    return conditions
 
 
 if __name__ == '__main__':
@@ -54,6 +28,17 @@ if __name__ == '__main__':
     parser.set_defaults(score_only=False)
     parser.set_defaults(adif_from_summary=False)
     args = parser.parse_args()
+
+    if args.year:
+        # TODO: Move try block into set_conditions. This is too broad as-is
+        try:
+            conditions = contests.set_conditions(int(args.year), 'saintpat')
+        except ValueError:
+            print("Invalid year given (must be in the form YYYY): Exiting", file=sys.stderr)
+            exit(1)
+    else:
+        print("No year given: Exiting", file=sys.stderr)
+        exit(1)
 
     summary = contests.summary_parser(args.summary, args.delim)
     adif_files = {}
@@ -81,12 +66,9 @@ if __name__ == '__main__':
         print("No files found: Exiting", file=sys.stderr)
         exit(1)
 
-    if args.year:
-        conditions = set_conditions(int(args.year))
-    else:
-        print("No year given: Exiting", file=sys.stderr)
-        exit(1)
-
+    valid_entries = None
+    invalid_entries = None
+    scores = None
     valid_entries, invalid_entries, scores = contests.saintpats(adif_files, conditions, summary[args.call.upper()])
 
     if args.debug:

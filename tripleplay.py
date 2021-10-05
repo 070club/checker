@@ -5,15 +5,13 @@
 # module for calculating the triple Play results
 
 import sys
-
+import adifparser
+import contests
+import argparse
+import pprint
+import os.path
 
 if __name__ == '__main__':
-    import adifparser
-    import contests
-    import argparse
-    import pprint
-    import os.path
-
     parser = argparse.ArgumentParser(description='Contests Checker')
     parser.add_argument('--year', metavar='YEAR')
     parser.add_argument('--summary', metavar='SUMMARY')
@@ -29,6 +27,17 @@ if __name__ == '__main__':
     parser.set_defaults(valid_only=False)
     parser.set_defaults(score_only=False)
     args = parser.parse_args()
+
+    if args.year:
+        # TODO: Move try block into set_conditions. This is too broad as-is
+        try:
+            conditions = contests.set_conditions(int(args.year), 'tripleplay')
+        except ValueError:
+            print("Invalid year given (must be in the form YYYY): Exiting", file=sys.stderr)
+            exit(1)
+    else:
+        print("No year given: Exiting", file=sys.stderr)
+        exit(1)
 
     summary = contests.summary_parser(args.summary, args.delim)
     adif_files = {}
@@ -58,11 +67,7 @@ if __name__ == '__main__':
     valid_entries = None
     invalid_entries = None
     scores = None
-    if args.year == '2020':
-        valid_entries, invalid_entries, scores = contests.triple_play_2020(adif_files, summary[args.call.upper()])
-    else:
-        print("No year given: Exiting", file=sys.stderr)
-        exit(1)
+    valid_entries, invalid_entries, scores = contests.triple_play(adif_files, conditions, summary[args.call.upper()])
 
     if args.debug:
         pprint.pprint(valid_entries)

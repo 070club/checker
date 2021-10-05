@@ -647,12 +647,7 @@ def tp_dh_build_date_blocks(summary, conditions):
     return conditions
 
 
-def triple_play_2020(adif_files, summary):
-    conditions = {'contest_start': datetime.datetime(2020, 11, 14, 00, 00, 00, 0),
-                  'contest_end': datetime.datetime(2020, 11, 16, 23, 59, 59, 0),
-                  'valid_modes': ['psk', 'bpsk', 'psk31', 'bpsk31', 'qpsk31'],
-                  'valid_bands': ['40m', '80m', '160m'],
-                  }
+def triple_play(adif_files, conditions, summary):
     conditions = tp_dh_build_date_blocks(summary, conditions)
     valid_records = []
     invalid_records = []
@@ -670,12 +665,7 @@ def triple_play_2020(adif_files, summary):
     return valid_records, invalid_records, scores
 
 
-def doubleheader_2020(adif_files, summary):
-    conditions = {'contest_start': datetime.datetime(2020, 12, 12, 00, 00, 00, 0),
-                  'contest_end': datetime.datetime(2020, 12, 14, 23, 59, 59, 0),
-                  'valid_modes': ['psk', 'bpsk', 'psk31', 'bpsk31', 'qpsk31'],
-                  'valid_bands': ['40m', '80m', '160m'],
-                  }
+def doubleheader(adif_files, conditions, summary):
     conditions = tp_dh_build_date_blocks(summary, conditions)
     valid_records = []
     invalid_records = []
@@ -878,6 +868,140 @@ def synthesize_fields(record):
     if 'submode' in record:  # 31 Flavors put submode in mode
         s_record['mode'] = record['submode']
     return s_record
+
+
+def set_conditions(year, contest):
+    """
+        This is where our logic details are for each contest to dynamically
+        determine what the start date/time and window size is
+    """
+    # TODO : make this a dict that returns the conditions
+    if contest == 'pskfest':
+        month = 1
+        day = calendar.SATURDAY
+        nth_day = 1
+        afterday = 1
+        contest_day = get_contest_day(year, month, day, nth_day, afterday)
+        conditions = {
+            'valid_modes': ['psk', 'bpsk', 'psk31', 'bpsk31', 'qpsk31'],
+            'valid_bands': ['10m', '15m', '20m', '40m', '80m'],
+            'contest_start': datetime.datetime(year, month, contest_day, 00, 00, 00, 0),
+            'contest_end': datetime.datetime(year, month, contest_day+1, 23, 59, 59, 0),
+        }
+
+    if contest == 'vdsprint':
+        month = 2
+        contest_day = 14
+        conditions = {
+            'valid_modes': ['psk', 'bpsk', 'psk31', 'bpsk31', 'qpsk31'],
+            'valid_bands': ['40m', '80m', '160m'],
+            'contest_start': datetime.datetime(year, month, contest_day, 00, 00, 00, 0),
+            'contest_end': datetime.datetime(year, month, contest_day+1, 23, 59, 59, 0),
+        }
+
+    if contest == 'saintpat':
+        month = 3
+        day = calendar.SATURDAY
+        nth_day = 3
+        contest_day = get_contest_day(year, month, day, nth_day)
+        conditions = {
+            'valid_modes': ['psk', 'bpsk', 'psk31', 'bpsk31', 'qpsk31'],
+            'valid_bands': ['6m', '10m', '15m', '20m', '40m', '80m', '160m'],
+            'contest_start': datetime.datetime(year, month, contest_day, 00, 00, 00, 0),
+            'contest_end': datetime.datetime(year, month, contest_day+1, 23, 59, 59, 0),
+        }
+
+    if contest == 'thirtyone':
+        month = 4
+        day = calendar.SATURDAY
+        nth_day = 1
+        contest_day = get_contest_day(year, month, day, nth_day)
+        conditions = {
+            'valid_modes': ['psk', 'bpsk',
+                            'psk31', 'bpsk31', 'qpsk31',
+                            'psk63', 'bpsk63', 'qpsk63',
+                            'psk125', 'bpsk125', 'qpsk125',
+                            ],
+            'valid_bands': ['20m'],
+            'contest_start': datetime.datetime(year, month, contest_day, 10, 00, 00, 0),
+            'contest_end': datetime.datetime(year, month, contest_day+1, 3, 59, 59, 0),
+        }
+
+    if contest == 'tdw':
+        # TODO : Need to calculate holiday info (month may depend on this)
+        month = 6
+        day = calendar.SATURDAY
+        nth_day = 2
+        contest_day = get_contest_day(year, month, day, nth_day)
+        conditions = {
+            'valid_modes': ['psk', 'bpsk', 'psk31', 'bpsk31', 'qpsk31', ],
+            'valid_bands': ['160m'],
+            'contest_start': datetime.datetime(year, month, contest_day, 20, 00, 00, 0),
+            'contest_end': datetime.datetime(year, month, contest_day+1, 19, 59, 59, 0),
+        }
+
+    if contest == 'firecracker':
+        month = 7
+        day = calendar.SATURDAY
+        nth_day = 1
+        afterday = 1
+        contest_day = get_contest_day(year, month, day, nth_day, afterday)
+        conditions = {
+            'valid_modes': ['psk', 'bpsk', 'psk31', 'bpsk31', 'qpsk31', ],
+            'valid_bands': ['40m'],
+            'contest_start': datetime.datetime(year, month, contest_day, 20, 00, 00, 0),
+            'contest_end': datetime.datetime(year, month, contest_day+1, 19, 59, 59, 0),
+        }
+
+    if contest == 'jayhudak':
+        month = 9
+        day = calendar.SATURDAY
+        nth_day = 1
+        contest_day = get_contest_day(year, month, day, nth_day)
+        conditions = {
+            'valid_modes': ['psk', 'bpsk', 'psk31', 'bpsk31', 'qpsk31', ],
+            'valid_bands': ['80m'],
+            'contest_start': datetime.datetime(year, month, contest_day, 20, 00, 00, 0),
+            'contest_end': datetime.datetime(year, month, contest_day+1, 19, 59, 59, 0),
+        }
+
+    if contest == 'greatpumpkin':
+        month = 10
+        day = calendar.SATURDAY
+        nth_day = 2
+        contest_day = get_contest_day(year, month, day, nth_day)
+        conditions = {
+            'valid_modes': ['psk', 'bpsk', 'psk31', 'bpsk31', 'qpsk31', ],
+            'valid_bands': ['160m'],
+            'contest_start': datetime.datetime(year, month, contest_day, 20, 00, 00, 0),
+            'contest_end': datetime.datetime(year, month, contest_day+1, 19, 59, 59, 0),
+        }
+
+    if contest == 'tripleplay':
+        month = 11
+        day = calendar.SATURDAY
+        nth_day = 2
+        contest_day = get_contest_day(year, month, day, nth_day)
+        conditions = {
+            'valid_modes': ['psk', 'bpsk', 'psk31', 'bpsk31', 'qpsk31'],
+            'valid_bands': ['40m', '80m', '160m'],
+            'contest_start': datetime.datetime(year, month, contest_day, 00, 00, 00, 0),
+            'contest_end': datetime.datetime(year, month, contest_day + 2, 23, 59, 59, 0),
+        }
+
+    if contest == 'doubleplay':
+        month = 12
+        day = calendar.SATURDAY
+        nth_day = 2
+        contest_day = get_contest_day(year, month, day, nth_day)
+        conditions = {
+            'valid_modes': ['psk', 'bpsk', 'psk31', 'bpsk31', 'qpsk31'],
+            'valid_bands': ['40m', '80m', '160m'],
+            'contest_start': datetime.datetime(year, month, contest_day, 00, 00, 00, 0),
+            'contest_end': datetime.datetime(year, month, contest_day + 2, 23, 59, 59, 0),
+        }
+
+    return conditions
 
 
 def get_contest_day(year, month, day, nth_day=1, afterday=0 ):
