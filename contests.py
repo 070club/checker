@@ -934,7 +934,7 @@ def set_conditions(year, contest):
         }
         last_monday = get_last_day_of_month(year, 5, calendar.MONDAY)
         if last_monday > 26:
-            day = calendar.SATURDAY
+            day = calendar.FRIDAY
             month = 6
             nth_day = 1
             contest_day = get_contest_day(year, month, day, nth_day)
@@ -942,7 +942,7 @@ def set_conditions(year, contest):
             conditions['contest_end'] = datetime.datetime(year, month, contest_day+2, 23, 59, 59, 0)
         else:
             month = 5
-            contest_day = last_monday + 5
+            contest_day = last_monday + 4
             conditions['contest_start'] = datetime.datetime(year, month, contest_day, 00, 00, 00, 0)
             try:
                 conditions['contest_end'] = datetime.datetime(year, month, contest_day+2, 23, 59, 59, 0)
