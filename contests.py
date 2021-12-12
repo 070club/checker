@@ -1000,7 +1000,7 @@ def set_conditions(year, contest):
             'contest_end': datetime.datetime(year, month, contest_day + 2, 23, 59, 59, 0),
         }
 
-    if contest == 'doubleplay':
+    if contest == 'doubleheader':
         month = 12
         day = calendar.SATURDAY
         nth_day = 2
