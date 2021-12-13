@@ -244,16 +244,45 @@ echo '
 
 
 switch ($contestname) {
-  case "thirtyone":
-    $contestname = "31 Flavors";
-	$back_url = '<a href="https://www.podxs070.com/31-flavors-uploader">try uploading again</a>';
+  case "pskfest":
+    $contestname = "PSKfest";
+    $back_url = '<a href="https://www.podxs070.com/pskfest-uploader">try uploading again</a>';
+    break;
+  case "vdsprint":
+    $contestname = "Valentines Sprint";
+    $back_url = '<a href="https://www.podxs070.com/vd-sprint-uploader">try uploading again</a>';
     break;
   case "saintpat":
     $contestname = "Saint Patrick's";
 	$back_url = '<a href="https://www.podxs070.com/saint-pats-uploader">try uploading again</a>';
     break;
-  case "vdsprint":
-    $contestname = "Valentine Sprint";
+  case "thirtyone":
+    $contestname = "31 Flavors";
+	$back_url = '<a href="https://www.podxs070.com/31-flavors-uploader">try uploading again</a>';
+    break;
+  case "tdw":
+    $contestname = "Three Day Weekend";
+    $back_url = '<a href="https://www.podxs070.com/tdw-uploader">try uploading again</a>';
+    break;
+  case "firecracker":
+    $contestname = "40m Firecracker Sprint";
+    $back_url = '<a href="https://www.podxs070.com/firecracker-uploader">try uploading again</a>';
+    break;
+  case "jayhudak":
+    $contestname = "Jay Hudak Memorial 80m Sprint";
+    $back_url = '<a href="https://www.podxs070.com/jay-hudak-uploader">try uploading again</a>';
+    break;
+  case "greatpumpkin":
+    $contestname = "160m Great Pumpkin Sprint";
+    $back_url = '<a href="https://www.podxs070.com/great-pumpkin-uploader">try uploading again</a>';
+    break;
+  case "tripleplay":
+    $contestname = "Triple Play Low Band";
+    $back_url = '<a href="https://www.podxs070.com/tripleplay-uploader">try uploading again</a>';
+    break;
+  case "doubleheader":
+    $contestname = "Double Header";
+    $back_url = '<a href="https://www.podxs070.com/doubleheader-uploader">try uploading again</a>';
     break;
   default:
     $contestname = $contestname;
