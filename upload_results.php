@@ -198,6 +198,10 @@ exec($cmd_string, $output, $retval);
 if($debug == 1){
     // instead of just restating commandline, maybe run the command with a debug flag?
     echo "<h3>Command output results</h3>";
+    $debug_cmd_string = "python3 " . $contest_script . " --debug --year " . $year . " --summary " . $summary . " --call " . $callsign . " --adif " . $adiffile . $cmd_tail;
+    $debug_output=null;
+    $debug_retval=null;
+    exec($debug_cmd_string, $debug_output, $debug_retval);
     print_r($debug_cmd_string);
     print_r($debug_retval);
     echo "<pre>";
