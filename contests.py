@@ -1028,7 +1028,7 @@ def get_contest_day(year, month, day, nth_day=1, afterday=0 ):
     for week in cal:
         if week[day] != 0:
             nth_day_counter += 1
-        if nth_day_counter == nth_day and week[day] > afterday:
+        if nth_day_counter >= nth_day and week[day] > afterday:
             return week[day]
 
 
