@@ -19,10 +19,10 @@ import calendar
 
 # Enumerations
 categories = {
-    5: 'QRP 5 watts',
-    25: 'Low Power 25 watts',
-    50: 'Medium Power 50 watts',
-    100: 'High Power 100 watts',
+    5: '5 watts: QRP',
+    25: '25 watts: Low Power',
+    50: '50 watts: Medium Power',
+    100: '100 watts: High Power',
 }
 
 dxcc_entities = {
