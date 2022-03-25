@@ -8,6 +8,7 @@
 # TODO: return error if not an ADIF file
 # TODO: write a cabrillo parser
 # TODO: write a log parser manager (higher-level call that picks which type to use; ADIF, cabrillo, etc)
+# TODO: Throw out invalid records (ie, test for invalid call, date/time, etc)
 
 import re
 import sys
