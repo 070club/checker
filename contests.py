@@ -1385,7 +1385,7 @@ def calc_egb(valid_records):
             testchar = suffix[1][0].upper()
         except:
             # TODO: This shouldn't happen unless suffix is broken.  Should invalidate in valid_records first
-            print("can't validate {}, call looks invalid. Skipping EGB score".format(rec['call']['data']))
+            print("can't validate {}, call looks invalid. Skipping EGB score".format(rec['call']['data']), file=sys.stderr)
         else:
             if testchar in egb['erin']['letters']:
                 egb['erin']['letters'].remove(testchar)
