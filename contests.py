@@ -865,6 +865,7 @@ def synthesize_fields(record):
         dxcc = get_dxcc(record)
         if dxcc:
             s_record['dxcc'] = dxcc
+    # TODO: this is probably wrong.  The length of mode and submode are probably different
     if 'submode' in record:  # 31 Flavors put submode in mode
         s_record['mode'] = record['submode']
     return s_record
@@ -1600,7 +1601,7 @@ def rec_in_window(entry, conditions, summary):
                 # TODO: Does it make sense to return True if we can't find a start time?
                 return True
             else:
-                if summary['contest_name'] == '31flavors':
+                if summary['contest_name'] in ['thirtyone', '31flavors']:
                     if 1000 <= block_start <= 2359:
                         block_start_string = conditions['contest_start'].strftime('%Y%m%d') + '{:0>4}'.format(
                             summary['block_start_time'])
