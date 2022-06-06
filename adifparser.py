@@ -9,6 +9,7 @@
 # TODO: write a cabrillo parser
 # TODO: write a log parser manager (higher-level call that picks which type to use; ADIF, cabrillo, etc)
 # TODO: Throw out invalid records (ie, test for invalid call, date/time, etc)
+# TODO: Figure out proper encoding when non-ascii characters are in records (ex. TDW 2022 N0NM)
 
 import re
 import sys
