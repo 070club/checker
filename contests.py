@@ -1522,6 +1522,9 @@ def calc_scores_tp_dh(valid_records):
 
 def test_record(entry, conditions, summary, valid_records):
     # Walk through each adif entry and validate against a bunch of stuff
+    # TODO: Add a test for valid member information (ie, during TDW, check the SRX_STRING of the
+    #       member number against the callsign of the QSO to see if it matches)  Use that instead
+    #       of a direct lookup regardless of exchange.
 
     errors = ['not_valid_band', 'not_in_window', 'is_not_psk', 'is_dupe']
 
