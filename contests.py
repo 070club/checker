@@ -10,6 +10,7 @@
 # TODO: handle the case of mobile calls (eg, W9SMR and W9SMR/9 are the same thing) This is fixed in TDW
 #       but there are other places where this is helpful
 # TODO: Add check for invalid year in all contests (see firecracker.py for example)
+# TODO: Add check for missing minimum fields (WA3GM 2022 TDW for example of missing call and QSO_date)
 
 import re
 import sys
