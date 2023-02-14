@@ -1986,7 +1986,7 @@ def print_entries_tdw(entries, bonus_stations, valid=True):
                 print("KeyError for record", file=sys.stderr)
 
 
-def print_score(scores, summary):
+def print_score(scores, summary, args):
     try:
         callsign = summary['callsign']
     except:
@@ -2016,7 +2016,7 @@ def print_score(scores, summary):
     state = len(scores['mults']['state'])
     total = scores['total']
 
-    if summary is not None:  # Report only, spit out CSV of call+score
+    if args.score_only:  # Report only, spit out CSV of call+score
         if om_yl is not None:
             yl_count = scores['mults']['yl']
             print('callsign,powerlevel,OM/YL,070-number,email,q-points,yl-count,dxcc-mult,state-mult,total')
