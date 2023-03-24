@@ -1362,6 +1362,7 @@ def calc_egb(valid_records):
         Spell the entire "Erin Go Bragh" and claim 
         an additional 200 points for a total of 500 Bonus Points.
     """
+    letters = ['E', 'R', 'I', 'N', 'G', 'O', 'B', 'R', 'A', 'G', 'H']
     egb = {
         'bonus': 0,
         'erin': {
@@ -1377,27 +1378,114 @@ def calc_egb(valid_records):
             'callsigns': {}
         },
     }
+    calls_shortlist = { 'r_count': 0, 'g_count': 0 }
+
     for rec in valid_records:
         # TODO: Make the suffix identification more robust (ie, account for weird digit placement)
         #       for example: DU1/N6HPX should be "H"  Find some way to split on /, then pull out
         #       the base callsign
 
-        suffix = re.split('\d+', rec['call']['data'])
+        suffix = re.split('[Ø\d]+', rec['call']['data'])
         try:
             testchar = suffix[1][0].upper()
         except:
             # TODO: This shouldn't happen unless suffix is broken.  Should invalidate in valid_records first
             print("can't validate {}, call looks invalid. Skipping EGB score".format(rec['call']['data']), file=sys.stderr)
         else:
-            if testchar in egb['erin']['letters']:
-                egb['erin']['letters'].remove(testchar)
-                egb['erin']['callsigns'][testchar] = rec['call']
-            elif testchar in egb['go']['letters']:
-                egb['go']['letters'].remove(testchar)
-                egb['go']['callsigns'][testchar] = rec['call']
-            elif testchar in egb['bragh']['letters']:
-                egb['bragh']['letters'].remove(testchar)
-                egb['bragh']['callsigns'][testchar] = rec['call']
+            # build letter/call matrix list of possible callsigns
+            if testchar in letters:
+                calls_shortlist.setdefault(testchar,[])
+                if rec['call']['data'] not in calls_shortlist[testchar]:
+                    calls_shortlist[testchar].append(rec['call']['data'])
+                    letters.remove(testchar)
+                    if testchar == 'R': calls_shortlist['r_count'] += 1
+                    if testchar == 'G': calls_shortlist['g_count'] += 1
+
+    try:
+        egb['erin']['callsigns']['E'] = calls_shortlist['E'][0]
+        egb['erin']['letters'].remove('E')
+    except KeyError:
+        pass
+    try:
+        egb['erin']['callsigns']['I'] = calls_shortlist['I'][0]
+        egb['erin']['letters'].remove('I')
+    except KeyError:
+        pass
+    try:
+        egb['erin']['callsigns']['N'] = calls_shortlist['N'][0]
+        egb['erin']['letters'].remove('N')
+    except KeyError:
+        pass
+    try:
+        egb['go']['callsigns']['O'] = calls_shortlist['O'][0]
+        egb['go']['letters'].remove('O')
+    except KeyError:
+        pass
+    try:
+        egb['bragh']['callsigns']['B'] = calls_shortlist['B'][0]
+        egb['bragh']['letters'].remove('B')
+    except KeyError:
+        pass
+    try:
+        egb['bragh']['callsigns']['A'] = calls_shortlist['A'][0]
+        egb['bragh']['letters'].remove('A')
+    except KeyError:
+        pass
+    try:
+        egb['bragh']['callsigns']['H'] = calls_shortlist['H'][0]
+        egb['bragh']['letters'].remove('H')
+    except KeyError:
+        pass
+    if calls_shortlist['r_count'] == 2:
+        try:
+            egb['erin']['callsigns']['R'] = calls_shortlist['R'][0]
+            egb['erin']['letters'].remove('R')
+        except KeyError:
+            pass
+        try:
+            egb['bragh']['callsigns']['R'] = calls_shortlist['R'][0]
+            egb['bragh']['letters'].remove('R')
+        except KeyError:
+            pass
+        calls_shortlist['r_count'] = 0
+    if calls_shortlist['g_count'] == 2:
+        try:
+            egb['go']['callsigns']['G'] = calls_shortlist['G'][0]
+            egb['go']['letters'].remove('G')
+        except KeyError:
+            pass
+        try:
+            egb['bragh']['callsigns']['G'] = calls_shortlist['G'][0]
+            egb['bragh']['letters'].remove('G')
+        except KeyError:
+            pass
+        calls_shortlist['g_count'] = 0
+    if calls_shortlist['r_count'] == 1:
+        if egb['erin']['letters'] == ['R']:
+            try:
+                egb['erin']['callsigns']['R'] = calls_shortlist['R'][0]
+                egb['erin']['letters'].remove('R')
+            except KeyError:
+                pass
+        else:
+            try:
+                egb['bragh']['callsigns']['R'] = calls_shortlist['R'][0]
+                egb['bragh']['letters'].remove('R')
+            except KeyError:
+                pass
+    if calls_shortlist['g_count'] == 1:
+        if egb['bragh']['letters'] == ['G']:
+            try:
+                egb['bragh']['callsigns']['G'] = calls_shortlist['G'][0]
+                egb['bragh']['letters'].remove('G')
+            except KeyError:
+                pass
+        else:
+            try:
+                egb['go']['callsigns']['G'] = calls_shortlist['G'][0]
+                egb['go']['letters'].remove('G')
+            except KeyError:
+                pass
 
     if len(egb['erin']['letters']) == 0: egb['bonus'] += 100
     if len(egb['go']['letters']) == 0: egb['bonus'] += 100
@@ -2080,27 +2168,35 @@ def print_score(scores, summary, args):
             )
             )
             # list EGB calls
+            print('Erin:')
             if len(scores['mults']['egb']['erin']['callsigns']) > 0:
-                print('Erin:')
                 for letter in ['E', 'R', 'I', 'N']:
                     try:
-                        print('    {}'.format(scores['mults']['egb']['erin']['callsigns'][letter]['data']))
+                        print('    {}'.format(scores['mults']['egb']['erin']['callsigns'][letter]))
                     except KeyError:
                         pass
+            else:
+                print('    No calls matched')
+
+            print('Go:')
             if len(scores['mults']['egb']['go']['callsigns']) > 0:
-                print('Go:')
                 for letter in ['G', 'O']:
                     try:
-                        print('    {}'.format(scores['mults']['egb']['go']['callsigns'][letter]['data']))
+                        print('    {}'.format(scores['mults']['egb']['go']['callsigns'][letter]))
                     except KeyError:
                         pass
+            else:
+                print('    No calls matched')
+
+            print('Bragh:')
             if len(scores['mults']['egb']['bragh']['callsigns']) > 0:
-                print('Bragh:')
                 for letter in ['B', 'R', 'A', 'G', 'H']:
                     try:
-                        print('    {}'.format(scores['mults']['egb']['bragh']['callsigns'][letter]['data']))
+                        print('    {}'.format(scores['mults']['egb']['bragh']['callsigns'][letter]))
                     except KeyError:
                         pass
+            else:
+                print('    No calls matched')
         else:
             print('\nQs:{} DXCC:{} STATE:{} Total:{}'.format(
                 scores['q-points'],

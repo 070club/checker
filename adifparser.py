@@ -9,11 +9,11 @@
 # TODO: write a cabrillo parser
 # TODO: write a log parser manager (higher-level call that picks which type to use; ADIF, cabrillo, etc)
 # TODO: Throw out invalid records (ie, test for invalid call, date/time, etc)
-# TODO: Figure out proper encoding when non-ascii characters are in records (ex. TDW 2022 N0NM)
 
 import re
 import sys
 import fileinput
+#import magic # using python-magic
 
 
 def parse_header(linebuf):
@@ -108,7 +108,14 @@ def parse(inputfile):
     linebuf = ''
 
     #TODO: add field validation (eg, make sure state info is valid - "ON // ONTARIO" ?)
-    with fileinput.input(inputfile,openhook=fileinput.hook_encoded("ISO-8859-1") ) as f:
+
+    # need to determine what kind of encoding to do on the input file, or just try a couple
+    # different common encodings (latin1, utf-8, etc).  utf-8 likes the slash zero, but not
+    # accented letters
+    #detected = magic.detect_from_filename(inputfile)
+    encoding = 'ISO-8859-1'
+
+    with fileinput.input(inputfile, openhook=fileinput.hook_encoded(encoding)) as f:
         for line in f:
             if fileinput.isfirstline():
                 if line[0] == '<':
