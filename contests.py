@@ -1443,7 +1443,7 @@ def calc_egb(valid_records):
         except KeyError:
             pass
         try:
-            egb['bragh']['callsigns']['R'] = calls_shortlist['R'][0]
+            egb['bragh']['callsigns']['R'] = calls_shortlist['R'][1]
             egb['bragh']['letters'].remove('R')
         except KeyError:
             pass
@@ -1455,7 +1455,7 @@ def calc_egb(valid_records):
         except KeyError:
             pass
         try:
-            egb['bragh']['callsigns']['G'] = calls_shortlist['G'][0]
+            egb['bragh']['callsigns']['G'] = calls_shortlist['G'][1]
             egb['bragh']['letters'].remove('G')
         except KeyError:
             pass
