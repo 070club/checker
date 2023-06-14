@@ -9,6 +9,7 @@
 # TODO: write a cabrillo parser
 # TODO: write a log parser manager (higher-level call that picks which type to use; ADIF, cabrillo, etc)
 # TODO: Throw out invalid records (ie, test for invalid call, date/time, etc)
+# TODO: Parser logic fails if a field has a < character in it (KR0ES TDW 2023 W3HF comment field for example)
 
 import re
 import sys
