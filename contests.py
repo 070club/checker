@@ -929,13 +929,14 @@ def set_conditions(year, contest):
             'contest_end': datetime.datetime(year, month, contest_day+1, 3, 59, 59, 0),
         }
 
+    # TODO: rework logic for calculating the dates.  2024 was wrong, so maybe something has changed or it's broken
     if contest == 'tdw':
         conditions = {
             'valid_modes': ['psk', 'bpsk', 'psk31', 'bpsk31', 'qpsk31', ],
             'valid_bands': ['6m', '10m', '15m', '20m', '40m', '80m', '160m'],
         }
         last_monday = get_last_day_of_month(year, 5, calendar.MONDAY)
-        if last_monday > 26:
+        if last_monday < 26:
             day = calendar.FRIDAY
             month = 6
             nth_day = 1
@@ -950,7 +951,7 @@ def set_conditions(year, contest):
                 conditions['contest_end'] = datetime.datetime(year, month, contest_day+2, 23, 59, 59, 0)
             except ValueError:
                 month = 6
-                contest_end_day = get_contest_day(year, month, calendar.MONDAY)
+                contest_end_day = get_contest_day(year, month, calendar.SUNDAY)
                 conditions['contest_end'] = datetime.datetime(year, month, contest_end_day, 23, 59, 59, 0)
 
     if contest == 'firecracker':
