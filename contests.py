@@ -1065,6 +1065,11 @@ def get_om_yl(record):
         for element in srx_data:
             if element.upper() in ['OM', 'YL']:
                 return {'length': len(element), 'data': element.upper()}
+    if 'rst_rcvd' in record:
+        rst_rcvd_data = re.split('[\W\s]{1}', record['rst_rcvd']['data'])
+        for element in rst_rcvd_data:
+            if element.upper() in ['OM', 'YL']:
+                return {'length': len(element), 'data': element.upper()}
     if 'comment' in record:
         comment_data = re.split('[\W\s]{1}', record['comment']['data'])
         for element in comment_data:
