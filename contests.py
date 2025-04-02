@@ -714,7 +714,7 @@ def vdsprint(adif_files, conditions, summary):
                 invalid_records.append({'data': s_record, 'errors': errors})
             else:
                 valid_records.append(s_record)
-    scores = calc_scores(valid_records)
+    scores = calc_vd_scores(valid_records)
     return valid_records, invalid_records, scores
 
 
@@ -1282,8 +1282,9 @@ def get_dxcc(record):
         if record['qth']['data'].upper() in ['US', 'USA', 'UNITED STATES']:
             return {'length': 3, 'data': '291'}
         for entity in dxcc_entities:
-            if record['qth']['data'].upper() == dxcc_entities[entity]['name']:
-                return {'length': len(entity), 'data': entity.upper()}
+            for qth_item in record['qth']['data'].upper().split():
+                if qth_item == dxcc_entities[entity]['name']:
+                    return {'length': len(entity), 'data': entity.upper()}
     return None
 
 
@@ -1326,6 +1327,32 @@ def get_member_number(record, max_valid=None):
 
 
 def calc_scores(valid_records):
+    scores = {}
+    scores['q-points'] = len(valid_records)
+    scores['mults'] = {}
+    scores['mults']['dxcc'] = {}
+    scores['mults']['dxcc']['data'] = []
+    scores['mults']['dxcc']['errors'] = []
+    scores['mults']['state'] = []
+    for rec in valid_records:
+        try:
+            if rec['dxcc']['data'] not in scores['mults']['dxcc']['data']:
+                scores['mults']['dxcc']['data'].append(rec['dxcc']['data'])
+        except:
+            scores['mults']['dxcc']['errors'].append(rec)
+        try:
+            # For now, assuming only US and Canada for states
+            if rec['state']['data'].upper() not in scores['mults']['state'] and \
+                    int(rec['dxcc']['data']) in [1, 6, 110, 291]:
+                scores['mults']['state'].append(rec['state']['data'].upper())
+        except:
+            pass
+    scores['total'] = (len(scores['mults']['dxcc']['data']) + len(scores['mults']['state'])) * (
+            scores['q-points'])
+    return scores
+
+
+def calc_vd_scores(valid_records):
     scores = {}
     scores['q-points'] = len(valid_records)
     scores['mults'] = {}
