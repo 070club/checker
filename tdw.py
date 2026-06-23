@@ -10,9 +10,12 @@ import sys
 
 
 def set_member_conditions(year, conditions):
+    if year == 2026:
+        conditions['bonus_stations'] = ['KC6ZTT', 'VA7GEM', 'N8TCP', 'KC3VPB', 'N3CHX', 'W3HF']
+        conditions['max_member'] = 3069  # TDW 2026 maximum
     if year == 2025:
         conditions['bonus_stations'] = ['KC3FL', 'KC3VPB', 'WA5AMM', 'N8TCP', 'WA1LAD']
-        conditions['max_member'] = 3037  # TDW 2024 maximum
+        conditions['max_member'] = 3037  # TDW 2025 maximum
     if year == 2024:
         conditions['bonus_stations'] = ['AB8YZ', 'KC3FL', 'KC3VPB', 'KZ3T', 'N0NM', 'VA3TPS', 'WA5AMM', 'VA7GEM']
         conditions['max_member'] = 3008  # TDW 2024 maximum
